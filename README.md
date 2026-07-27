@@ -15,7 +15,7 @@
 - 领奖联系方式不会进入公开活动快照、参与编号、中奖名单或开奖复算材料；
 - 浏览器响应经过显式字段白名单，provider 多返回的私有字段不会被透传；
 - 普通数据网关和准备/开奖控制面使用不同密钥；
-- 开奖采用预先承诺的私有种子与固定公共随机源，并公开候选清单供浏览器复算；
+- 开奖采用预先承诺的私有种子与固定 drand Quicknet 公共随机源，服务端和浏览器均使用固定链公钥验证 BLS 签名，并公开候选清单供复算；
 - 亮暗主题、移动端布局、键盘焦点和减少动效偏好。
 
 ## 五分钟体验
@@ -94,10 +94,10 @@ npm run local:e2e:stop
 
 联系方式是私密运营数据。`main-site` 适配器会在入库前生成 AES-256-GCM 信封；兑奖只允许超级管理员单条审计读取，模板默认在计划开奖 30 天后停止读取并由每日任务清除在线密文。部署前仍必须把期限改成活动规则承诺的准确时间，并建立备份过期策略。详见 [隐私说明](docs/PRIVACY.md) 与 [联系方式加密](docs/CONTACT_ENCRYPTION.md)。
 
-当前 `main-site` provider 会固定 drand chain 与 round，并核对 `SHA-256(signature) = randomness`。在完成链公钥 BLS 签名验证前，不应宣称系统完全独立验证了 drand 来源；生产限制见 [生产就绪清单](docs/PRODUCTION_READINESS.md)。
+当前 `main-site` provider 固定 drand Quicknet 链哈希、RFC9380 scheme 和 G2 公钥；服务端在开奖写库前验证 round、randomness 和 BLS12-381 签名，浏览器对公示快照离线执行同样验证。生产限制见 [生产就绪清单](docs/PRODUCTION_READINESS.md)。
 
 ## 项目状态
 
-当前版本是 `0.1.0` 初始开源版：演示模式、配置边界、接口白名单、联系方式静态加密、单条兑奖审计、数据保留自动化、CI、Apache-2.0 许可证和治理文件已具备；通用 OIDC adapter、独立兑奖角色、drand BLS 验证和独立生产数据库仍在路线图中。
+当前版本是 `0.1.0` 初始开源版：演示模式、配置边界、接口白名单、联系方式静态加密、单条兑奖审计、数据保留自动化、drand BLS 验证、CI、Apache-2.0 许可证和治理文件已具备；通用 OIDC adapter、独立兑奖角色和独立生产数据库仍在路线图中。
 
 参与贡献前请阅读 [CONTRIBUTING.md](CONTRIBUTING.md) 与 [SECURITY.md](SECURITY.md)。

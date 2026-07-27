@@ -1,13 +1,7 @@
+import { verifyQuicknetBeacon } from './drandVerification.js';
+
 function bytesToHex(bytes) {
   return Array.from(bytes, (byte) => byte.toString(16).padStart(2, '0')).join('');
-}
-
-function hexToBytes(value) {
-  const normalized = String(value || '').trim().toLowerCase();
-  if (!/^[0-9a-f]+$/u.test(normalized) || normalized.length % 2 !== 0) {
-    throw new Error('invalid_hex');
-  }
-  return Uint8Array.from(normalized.match(/.{2}/gu).map((item) => Number.parseInt(item, 16)));
 }
 
 async function sha256Hex(value) {
@@ -28,8 +22,12 @@ export async function verifyPublicDraw(snapshot) {
   };
   try {
     checks.seedCommitment = await sha256Hex(campaign.seedReveal) === campaign.seedCommitment;
-    checks.beaconSignature = await sha256Hex(hexToBytes(campaign.publicRandomnessSignature))
-      === campaign.publicRandomness;
+    checks.beaconSignature = await verifyQuicknetBeacon({
+      chainHash: campaign.publicRandomnessChain,
+      round: campaign.publicRandomnessRound,
+      randomness: campaign.publicRandomness,
+      signature: campaign.publicRandomnessSignature,
+    });
     checks.candidateManifest = await sha256Hex(candidates.join('\n')) === campaign.candidateManifestHash;
 
     const ranked = await Promise.all(candidates.map(async (publicId) => ({

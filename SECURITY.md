@@ -30,8 +30,8 @@
 
 ## 当前已知限制
 
-- `main-site` provider 已默认加密联系方式，但尚未提供自动删除任务、独立兑奖角色和解密访问审计；
-- drand 当前核对 round 与 `SHA-256(signature) = randomness`，尚未使用链公钥执行 BLS 签名验证；
+- `main-site` provider 已加密联系方式，并提供单条访问审计与自动删除任务；兑奖入口目前仍使用主站 `super_admin`，尚未拆分独立最小权限角色；
+- drand Quicknet 链哈希、scheme 与 G2 公钥固定在服务端和浏览器验证模块中；round、`SHA-256(signature) = randomness` 与 RFC9380 BLS12-381 签名均需通过；
 - 内存限流不等同于多实例全局限流；
 - 运营接口仍使用长期 bearer secret，虽已和普通数据网关分离，但尚未接入短期管理员身份和完整审计日志。
 

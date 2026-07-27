@@ -4,6 +4,11 @@ import { createHash, webcrypto } from 'node:crypto';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { verifyPublicDraw } from './drawVerification.js';
 
+const QUICKNET_CHAIN = '52db9ba70e0cc0f6eaf7803dd07447a1f5477735fd3f661792ba94600c84e971';
+const QUICKNET_ROUND = 1000;
+const QUICKNET_RANDOMNESS = 'fe290beca10872ef2fb164d2aa4442de4566183ec51c56ff3cd603d930e54fdd';
+const QUICKNET_SIGNATURE = 'b44679b9a59af2ec876b1a6b1ad52ea9b1615fc3982b19576350f93447cb1125e342b73a8dd2bacbe47e4b6b63ed5e39';
+
 function sha256Text(value) {
   return createHash('sha256').update(value, 'utf8').digest('hex');
 }
@@ -16,13 +21,14 @@ describe('public draw verification', () => {
   it('independently verifies the seed, beacon, manifest, and winner ranking', async () => {
     const publicId = '11111111-1111-4111-8111-111111111111';
     const seed = 'local-public-seed';
-    const randomness = createHash('sha256').update(Buffer.from('00', 'hex')).digest('hex');
     const result = await verifyPublicDraw({
       campaign: {
         seedReveal: seed,
         seedCommitment: sha256Text(seed),
-        publicRandomness: randomness,
-        publicRandomnessSignature: '00',
+        publicRandomnessChain: QUICKNET_CHAIN,
+        publicRandomnessRound: QUICKNET_ROUND,
+        publicRandomness: QUICKNET_RANDOMNESS,
+        publicRandomnessSignature: QUICKNET_SIGNATURE,
         candidateManifestHash: sha256Text(publicId),
         prizePlan: { first: 2, second: 2 },
       },
@@ -42,13 +48,14 @@ describe('public draw verification', () => {
   it('fails when a published winner was changed', async () => {
     const publicId = '11111111-1111-4111-8111-111111111111';
     const seed = 'local-public-seed';
-    const randomness = createHash('sha256').update(Buffer.from('00', 'hex')).digest('hex');
     const result = await verifyPublicDraw({
       campaign: {
         seedReveal: seed,
         seedCommitment: sha256Text(seed),
-        publicRandomness: randomness,
-        publicRandomnessSignature: '00',
+        publicRandomnessChain: QUICKNET_CHAIN,
+        publicRandomnessRound: QUICKNET_ROUND,
+        publicRandomness: QUICKNET_RANDOMNESS,
+        publicRandomnessSignature: QUICKNET_SIGNATURE,
         candidateManifestHash: sha256Text(publicId),
         prizePlan: { first: 1, second: 0 },
       },
