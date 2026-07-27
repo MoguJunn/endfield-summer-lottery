@@ -1,0 +1,40 @@
+name: 缺陷报告
+description: 报告可以公开讨论且不包含敏感信息的问题
+title: "[Bug] "
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: 安全漏洞、密钥或真实联系方式请按 SECURITY.md 私下报告。
+  - type: dropdown
+    id: provider
+    attributes:
+      label: Provider
+      options: [demo, main-site, 不确定]
+    validations:
+      required: true
+  - type: textarea
+    id: description
+    attributes:
+      label: 问题描述
+      description: 请说明实际行为和预期行为。
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: 最小复现
+      description: 不要粘贴 token、Cookie、联系方式或 .env。
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: 版本或提交
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: 环境
+      description: 操作系统、Node 版本、浏览器和部署平台。
