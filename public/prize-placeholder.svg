@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 420" role="img" aria-labelledby="title desc">
+  <title id="title">(VÁ`Mþ</title>
+  <desc id="desc">ÝÿråÌo
+„<iÒIþH</desc>
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#0a82c9"/>
+      <stop offset="1" stop-color="#31d6cf"/>
+    </linearGradient>
+    <linearGradient id="box" x1="0" y1="0" x2="0" y2="1">
+      <stop stop-color="#fff9a8"/>
+      <stop offset="1" stop-color="#ffd84d"/>
+    </linearGradient>
+  </defs>
+  <rect width="640" height="420" rx="36" fill="url(#sky)"/>
+  <circle cx="540" cy="82" r="52" fill="#fff56a" opacity=".95"/>
+  <g fill="none" stroke="#fff" stroke-linecap="round" opacity=".45">
+    <path d="M-20 330c80-54 134 44 214-10s137 45 218-12 145 42 236-20" stroke-width="14"/>
+    <path d="M-20 370c80-54 134 44 214-10s137 45 218-12 145 42 236-20" stroke-width="7"/>
+  </g>
+  <g transform="translate(188 108)">
+    <rect x="24" y="78" width="216" height="184" rx="18" fill="url(#box)" stroke="#0a5f99" stroke-width="10"/>
+    <rect x="0" y="52" width="264" height="66" rx="14" fill="#fff5a1" stroke="#0a5f99" stroke-width="10"/>
+    <rect x="110" y="52" width="44" height="210" fill="#ff8668"/>
+    <path d="M132 52C48 38 63-30 106 0c17 12 24 35 26 52Zm0 0c84-14 69-82 26-52-17 12-24 35-26 52Z" fill="#ff8668" stroke="#0a5f99" stroke-width="9"/>
+  </g>
+  <g fill="#fff" opacity=".9">
+    <path d="m93 76 8 19 20 8-20 8-8 20-8-20-20-8 20-8z"/>
+    <path d="m520 218 6 14 14 6-14 6-6 14-6-14-14-6 14-6z"/>
+  </g>
+</svg>

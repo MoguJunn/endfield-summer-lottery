@@ -1,0 +1,47 @@
+{
+  "name": "open-lottery",
+  "version": "0.1.0",
+  "description": "可配置、可验证并支持身份适配器的社区抽奖活动站",
+  "private": true,
+  "license": "Apache-2.0",
+  "type": "module",
+  "engines": {
+    "node": "^22.17.0 || >=24 <27",
+    "npm": ">=10"
+  },
+  "scripts": {
+    "dev": "vite --port 5175",
+    "dev:demo": "cross-env LOTTERY_PROVIDER=demo LOTTERY_SITE_URL=http://localhost:5175 VITE_AUTH_CAPTCHA_MODE=enforce VITE_AUTH_CAPTCHA_REQUIRED_ACTIONS=lottery_enter VITE_AUTH_CAPTCHA_REGION_STRATEGY=pow vite --port 5175",
+    "demo:check": "node scripts/demo-check.mjs",
+    "build": "vite build",
+    "preview": "vite preview --port 4175",
+    "lint": "eslint .",
+    "test": "vitest run",
+    "check": "npm run lint && npm test && npm run build",
+    "db:test": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/db-test.ps1",
+    "local:e2e": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/local-e2e.ps1 Start",
+    "local:e2e:check": "node scripts/local-e2e-smoke.mjs",
+    "local:e2e:draw": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/local-e2e.ps1 Draw",
+    "local:e2e:verify": "node scripts/local-e2e-verify.mjs",
+    "local:e2e:reset": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/local-e2e.ps1 Reset",
+    "local:e2e:stop": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/local-e2e.ps1 Stop"
+  },
+  "dependencies": {
+    "@fontsource-variable/roboto-mono": "^5.3.0",
+    "lucide-react": "^1.26.0",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@vitejs/plugin-react-swc": "^4.3.2",
+    "cross-env": "^10.1.0",
+    "eslint": "^10.8.0",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "eslint-plugin-react-refresh": "^0.5.3",
+    "globals": "^17.7.0",
+    "jsdom": "^27.0.1",
+    "vite": "^7.3.6",
+    "vitest": "^3.2.7"
+  }
+}
