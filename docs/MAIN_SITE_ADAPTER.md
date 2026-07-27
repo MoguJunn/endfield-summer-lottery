@@ -48,6 +48,8 @@
 
 ## 数据库
 
-迁移 160 是当前 Supabase/PostgreSQL adapter；迁移 161 为已应用旧版迁移的数据库收紧联系方式约束。四个 RPC 只授予 `service_role`：交换 SSO ticket、参与、准备开奖和执行开奖。参与 RPC 只接受版本化加密信封，拒绝明文。第三方实现其他数据库时应保持同等事务与保密语义，而不是照搬 PostgreSQL 异常文本作为公开协议。
+迁移 160 是当前 Supabase/PostgreSQL adapter；迁移 161 为已应用旧版迁移的数据库收紧联系方式约束；迁移 162 增加联系方式保留期限、追加式访问审计、单条读取/删除与到期清理 RPC。参与 RPC 只接受版本化加密信封，拒绝明文。`service_role` 只能直接读取 entry 的安全元数据，不能绕过审计选择 `contact_value`。第三方实现其他数据库时应保持同等事务与保密语义，而不是照搬 PostgreSQL 异常文本作为公开协议。
 
 联系方式加密 keyring 只配置在主站服务端，不能发送给活动站或数据库。配置和轮换流程见 [联系方式加密](CONTACT_ENCRYPTION.md)。
+
+主站管理接口 `/api/admin-summer-lottery-contacts` 使用站点超级管理员会话，只提供中奖目标列表、单条解密和单条隐私删除。定时接口 `/api/summer-lottery-contact-retention` 由 Vercel Cron 使用 `CRON_SECRET` 每日调用，不向浏览器公开密文。

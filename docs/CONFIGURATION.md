@@ -28,8 +28,11 @@
 |---|---|
 | `LOTTERY_CONTACT_ENCRYPTION_ACTIVE_KEY_ID` | 新报名使用的 key id |
 | `LOTTERY_CONTACT_ENCRYPTION_KEYS_JSON` | key id 到 32 字节 base64url 密钥的 JSON；轮换期间可同时保留旧 key |
+| `CRON_SECRET` | 主站 Vercel 每日联系方式到期清理任务的鉴权密钥 |
 
 这组密钥不得使用 `VITE_` 前缀，也不得与两个网关密钥、数据库 service role、会话或开奖密钥复用。生成与轮换步骤见 [联系方式加密](CONTACT_ENCRYPTION.md)。
+
+联系方式期限存放在数据库 `summer_lottery_campaigns.contact_retention_until`，不由活动站环境变量覆盖。迁移 162 对已有活动默认回填为计划开奖后 30 天；生产部署必须在开放参与前改成活动规则承诺的准确时间。
 
 ## 本站会话与运营
 

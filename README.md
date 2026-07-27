@@ -92,12 +92,12 @@ npm run local:e2e:stop
 
 ## 隐私与公平性
 
-联系方式是私密运营数据。`main-site` 适配器会在入库前生成 AES-256-GCM 信封，数据库、备份和普通查询不会保存明文；公开部署前仍必须确定收集目的、解密人员、保存期限、删除方式和备份保留策略。详见 [隐私说明](docs/PRIVACY.md) 与 [联系方式加密](docs/CONTACT_ENCRYPTION.md)。
+联系方式是私密运营数据。`main-site` 适配器会在入库前生成 AES-256-GCM 信封；兑奖只允许超级管理员单条审计读取，模板默认在计划开奖 30 天后停止读取并由每日任务清除在线密文。部署前仍必须把期限改成活动规则承诺的准确时间，并建立备份过期策略。详见 [隐私说明](docs/PRIVACY.md) 与 [联系方式加密](docs/CONTACT_ENCRYPTION.md)。
 
 当前 `main-site` provider 会固定 drand chain 与 round，并核对 `SHA-256(signature) = randomness`。在完成链公钥 BLS 签名验证前，不应宣称系统完全独立验证了 drand 来源；生产限制见 [生产就绪清单](docs/PRODUCTION_READINESS.md)。
 
 ## 项目状态
 
-当前版本是 `0.1.0` 初始开源版：演示模式、配置边界、接口白名单、联系方式静态加密、CI、Apache-2.0 许可证和治理文件已具备；通用 OIDC adapter、兑奖解密审计、数据保留自动化、drand BLS 验证和独立生产数据库仍在路线图中。
+当前版本是 `0.1.0` 初始开源版：演示模式、配置边界、接口白名单、联系方式静态加密、单条兑奖审计、数据保留自动化、CI、Apache-2.0 许可证和治理文件已具备；通用 OIDC adapter、独立兑奖角色、drand BLS 验证和独立生产数据库仍在路线图中。
 
 参与贡献前请阅读 [CONTRIBUTING.md](CONTRIBUTING.md) 与 [SECURITY.md](SECURITY.md)。

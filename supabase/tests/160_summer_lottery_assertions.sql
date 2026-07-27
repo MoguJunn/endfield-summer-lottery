@@ -29,7 +29,7 @@ INSERT INTO public.app_sessions (
 
 INSERT INTO public.summer_lottery_campaigns (
   id, title, starts_at, closes_at, draws_at, status, prize_plan,
-  public_randomness_chain, public_randomness_round
+  public_randomness_chain, public_randomness_round, contact_retention_until
 ) VALUES (
   'contract-test-lottery',
   'Contract Test Lottery',
@@ -39,7 +39,8 @@ INSERT INTO public.summer_lottery_campaigns (
   'scheduled',
   '{"first":1,"second":0}'::JSONB,
   '52db9ba70e0cc0f6eaf7803dd07447a1f5477735fd3f661792ba94600c84e971',
-  31618612
+  31618612,
+  NOW() + INTERVAL '31 days'
 );
 
 INSERT INTO public.summer_lottery_sso_tickets (

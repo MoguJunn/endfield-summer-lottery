@@ -57,6 +57,17 @@ node --input-type=module -e "import { randomBytes } from 'node:crypto'; console.
 - 已有真实数据时，先停止报名写入，通过不记录明文的受信任一次性任务逐行加密，再重新执行迁移；
 - 不要为通过迁移而伪造 `olc1` 前缀，也不要把明文导出到普通 CSV、Issue、聊天或构建日志。
 
-## 尚未覆盖
+## 读取、审计与删除
 
-当前代码没有领奖联系方式读取接口。后续若实现解密，应使用独立兑奖角色、默认单条读取、访问审计和最短保留期；更高安全等级可将加密迁移到支持“只允许加密”权限的 KMS，使普通报名网关不具备解密能力。
+迁移 `162_add_lottery_contact_retention.sql` 增加以下边界：
+
+- `service_role` 无权直接选择 `contact_value`；
+- `read_summer_lottery_contact` 只读取已开奖的单个中奖 entry，并在返回密文前写入审计；
+- 读取用途只能由主站映射为 `winner_notification` 或 `claim_follow_up`，避免审计理由包含个人信息；
+- `purge_summer_lottery_contact` 处理单条隐私删除请求；
+- `purge_expired_summer_lottery_contacts` 到期后清除活动全部密文，并保持公开 entry/winner 不变；
+- 审计表禁止应用角色直接插入、更新、删除或清空。
+
+模板将已有活动回填为计划开奖后 30 天。生产活动必须在开放参与前将 `contact_retention_until` 改成规则中承诺的准确期限。主站 Vercel Cron 每日调用 `/api/summer-lottery-contact-retention`；即使任务延迟，过期读取也会失败关闭。
+
+当前管理界面仍使用主站 `super_admin`，尚未拆出独立兑奖角色。更高安全等级可将加密迁移到支持“只允许加密”权限的 KMS，使普通报名网关不具备解密能力。删除在线密文也不会追溯删除已生成的数据库备份，旧 key 只有在相关备份全部过期后才能退役。

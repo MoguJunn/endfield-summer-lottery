@@ -137,6 +137,30 @@ if (firstEntry.data?.entry?.publicId !== secondEntry.data?.entry?.publicId || se
 }
 
 const storedContactResponse = await fetch(
+  `${state.apiUrl}/rest/v1/rpc/inspect_summer_lottery_contact_storage`,
+  {
+    method: 'POST',
+    headers: {
+      apikey: state.serviceRoleKey,
+      Authorization: `Bearer ${state.serviceRoleKey}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ p_campaign_id: 'community-lottery' }),
+  },
+);
+const storedContact = await storedContactResponse.json().catch(() => null);
+if (
+  !storedContactResponse.ok
+  || Number(storedContact?.entryCount) !== 1
+  || Number(storedContact?.encryptedCount) !== 1
+  || Number(storedContact?.invalidCount) !== 0
+  || JSON.stringify(storedContact).includes('demo-contact')
+  || JSON.stringify(storedContact).includes('olc1.')
+) {
+  throw new Error('database did not persist the expected encrypted contact envelope');
+}
+
+const directContactResponse = await fetch(
   `${state.apiUrl}/rest/v1/summer_lottery_entries?select=contact_value&campaign_id=eq.community-lottery&limit=1`,
   {
     headers: {
@@ -145,10 +169,8 @@ const storedContactResponse = await fetch(
     },
   },
 );
-const storedContacts = await storedContactResponse.json().catch(() => null);
-const storedContact = Array.isArray(storedContacts) ? storedContacts[0]?.contact_value : '';
-if (!storedContactResponse.ok || !/^olc1\./u.test(storedContact) || storedContact.includes('demo-contact')) {
-  throw new Error('database did not persist the expected encrypted contact envelope');
+if (directContactResponse.ok) {
+  throw new Error('service_role unexpectedly bypassed audited contact access');
 }
 
 console.log(JSON.stringify({
@@ -165,6 +187,7 @@ console.log(JSON.stringify({
     'pow_captcha',
     'private_delivery_contact',
     'encrypted_contact_storage',
+    'audited_contact_column_boundary',
     'entry_idempotency',
   ],
 }, null, 2));
