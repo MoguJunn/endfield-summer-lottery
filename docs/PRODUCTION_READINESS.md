@@ -10,7 +10,7 @@
 - [x] 实现联系方式保留期限、每日删除任务和管理员单条访问审计；
 - [ ] 将兑奖权限从主站 `super_admin` 拆分为独立最小权限角色；
 - [x] 使用固定 Quicknet 链公钥验证 drand BLS 签名与 round；
-- [ ] 将内存限流替换为多实例共享限流；
+- [x] 将抽奖敏感入口的内存限流替换为 PostgreSQL 原子共享限流；
 - [ ] 将长期运营 bearer secret 升级为短期管理员身份或签名请求；
 - [ ] 增加真实浏览器 E2E，覆盖 OAuth、跨浏览器 state、ticket 重放和并发参与；
 - [ ] 建立数据库备份、恢复、迁移失败回滚和 secret 轮换流程；
@@ -26,6 +26,7 @@
 - [ ] Turnstile 域名、site key、secret 和 PoW 签名密钥已配置；
 - [ ] SSO Cookie 均为 host-only，生产使用 Secure；
 - [ ] 普通网关密钥不能执行 `prepare` 或 `draw`；
+- [ ] 迁移 163 已应用，SSO、报名和运营动作能返回数据库生成的 `Retry-After`；
 - [ ] 公开快照不包含联系方式、邮箱、内部角色或源 session；
 - [ ] prepare 在第一条参与记录产生前成功，commitment 已保存；
 - [ ] 生产环境日志、错误追踪和告警均会清除 token 与联系方式；

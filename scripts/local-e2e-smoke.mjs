@@ -185,6 +185,7 @@ console.log(JSON.stringify({
     'lottery_session',
     'csrf',
     'pow_captcha',
+    'shared_database_rate_limit',
     'private_delivery_contact',
     'encrypted_contact_storage',
     'audited_contact_column_boundary',

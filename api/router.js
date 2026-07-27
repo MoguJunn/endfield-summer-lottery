@@ -86,6 +86,9 @@ function businessError(error) {
     pow_invalid_steps: '工作量证明参数无效，请重新验证。',
     pow_failed: '工作量证明未通过，请重新验证。',
     captcha_challenge_unavailable: '机器人验证暂时不可用，请稍后重试。',
+    rate_limited: '操作过于频繁，请按提示稍后重试。',
+    lottery_rate_limit_not_configured: '共享限流尚未完成部署配置。',
+    lottery_rate_limit_unavailable: '共享限流暂时不可用，请稍后重试。',
     lottery_backend_unavailable: '抽奖数据服务暂时不可用，请稍后再试。',
   };
   return { code, message: messages[code] || '服务暂时不可用，请稍后再试。' };
@@ -99,6 +102,7 @@ async function handleSnapshot(req, res) {
     const credentials = readLotteryCredentials(req);
     const snapshot = await callLotteryProvider('snapshot', {
       sessionTokenHash: credentials.sessionTokenHash,
+      requesterIp: getRequesterIp(req),
     });
     return sendJson(res, 200, {
       success: true,
@@ -146,6 +150,7 @@ async function handleEnter(req, res) {
     });
     const snapshot = await callLotteryProvider('snapshot', {
       sessionTokenHash: credentials.sessionTokenHash,
+      requesterIp: getRequesterIp(req),
     });
     return sendJson(res, entry.alreadyEntered ? 200 : 201, {
       success: true,
@@ -214,6 +219,7 @@ async function handleSsoCallback(req, res) {
       sessionTokenHash: material.sessionTokenHash,
       csrfTokenHash: material.csrfTokenHash,
       expiresAt: material.expiresAt,
+      requesterIp: getRequesterIp(req),
     });
     clearSsoStateCookie(req, res);
     setLotterySessionCookies(req, res, material);
@@ -241,6 +247,7 @@ async function handleLogout(req, res) {
     await callLotteryProvider('logout', {
       sessionTokenHash: credentials.sessionTokenHash,
       csrfTokenHash: credentials.csrfTokenHash,
+      requesterIp: getRequesterIp(req),
     });
     clearLotterySessionCookies(req, res);
     return sendJson(res, 200, { success: true });
@@ -266,6 +273,7 @@ async function handlePrepare(req, res) {
   try {
     const result = await callLotteryProvider('prepare', {
       seedCommitment: createHash('sha256').update(config.drawSeed, 'utf8').digest('hex'),
+      requesterIp: getRequesterIp(req),
     });
     return sendJson(res, 200, { success: true, data: result });
   } catch (error) {
@@ -279,7 +287,10 @@ async function handleDraw(req, res) {
   const config = requireRuntime(res, { includeDraw: true });
   if (!config || !requireDrawAuthorization(req, res, config)) return;
   try {
-    const result = await callLotteryProvider('draw', { seed: config.drawSeed });
+    const result = await callLotteryProvider('draw', {
+      seed: config.drawSeed,
+      requesterIp: getRequesterIp(req),
+    });
     return sendJson(res, 200, { success: true, data: result });
   } catch (error) {
     const normalized = businessError(error);
@@ -292,7 +303,9 @@ async function handleHealth(req, res) {
   const config = requireRuntime(res, { includeDraw: true });
   if (!config) return;
   try {
-    const backend = await callLotteryProvider('health');
+    const backend = await callLotteryProvider('health', {
+      requesterIp: getRequesterIp(req),
+    });
     const ready = backend?.schemaReady === true && backend?.campaignPrepared === true;
     return sendJson(res, ready ? 200 : 503, {
       success: ready,
