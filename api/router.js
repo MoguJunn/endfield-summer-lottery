@@ -1,7 +1,7 @@
 import { createHash } from 'node:crypto';
 import { sanitizeEntryResult, sanitizeSnapshot } from './_lib/contracts.js';
 import { getRuntimeConfig, getMissingRuntimeKeys } from './_lib/env.js';
-import { getRequesterIp, sendError, sendJson, redirect, readBearerToken, rejectDisallowedOrigin, safeEqual } from './_lib/http.js';
+import { getRequesterIp, sendError, sendJson, redirect, rejectDisallowedOrigin, safeEqual } from './_lib/http.js';
 import { callLotteryProvider, createProviderPowChallenge } from './_lib/provider.js';
 import { getPublicSiteConfig, validateContactValue } from './_lib/publicConfig.js';
 import {
@@ -46,9 +46,9 @@ function normalizePowPayload(value) {
   };
 }
 
-function requireRuntime(res, { includeDraw = false } = {}) {
+function requireRuntime(res) {
   const config = getRuntimeConfig();
-  if (getMissingRuntimeKeys(config, { includeDraw }).length) {
+  if (getMissingRuntimeKeys(config).length) {
     sendError(res, 503, 'service_not_configured', '抽奖服务尚未完成部署配置。');
     return null;
   }
@@ -257,50 +257,9 @@ async function handleLogout(req, res) {
   }
 }
 
-function requireDrawAuthorization(req, res, config) {
-  const token = readBearerToken(req);
-  if (!token || !safeEqual(token, config.drawSecret)) {
-    sendError(res, 401, 'admin_unauthorized', '管理员凭据无效。');
-    return false;
-  }
-  return true;
-}
-
-async function handlePrepare(req, res) {
-  if (req.method !== 'POST') return methodNotAllowed(req, res, ['POST']);
-  const config = requireRuntime(res, { includeDraw: true });
-  if (!config || !requireDrawAuthorization(req, res, config)) return;
-  try {
-    const result = await callLotteryProvider('prepare', {
-      seedCommitment: createHash('sha256').update(config.drawSeed, 'utf8').digest('hex'),
-      requesterIp: getRequesterIp(req),
-    });
-    return sendJson(res, 200, { success: true, data: result });
-  } catch (error) {
-    const normalized = businessError(error);
-    return sendError(res, error?.status || 409, normalized.code, normalized.message);
-  }
-}
-
-async function handleDraw(req, res) {
-  if (req.method !== 'POST') return methodNotAllowed(req, res, ['POST']);
-  const config = requireRuntime(res, { includeDraw: true });
-  if (!config || !requireDrawAuthorization(req, res, config)) return;
-  try {
-    const result = await callLotteryProvider('draw', {
-      seed: config.drawSeed,
-      requesterIp: getRequesterIp(req),
-    });
-    return sendJson(res, 200, { success: true, data: result });
-  } catch (error) {
-    const normalized = businessError(error);
-    return sendError(res, error?.status || 409, normalized.code, normalized.message);
-  }
-}
-
 async function handleHealth(req, res) {
   if (req.method !== 'GET') return methodNotAllowed(req, res, ['GET']);
-  const config = requireRuntime(res, { includeDraw: true });
+  const config = requireRuntime(res);
   if (!config) return;
   try {
     const backend = await callLotteryProvider('health', {
@@ -335,8 +294,6 @@ export default async function handler(req, res) {
   if (path === '/api/auth/sso/start') return handleSsoStart(req, res);
   if (path === '/api/auth/sso/callback') return handleSsoCallback(req, res);
   if (path === '/api/auth/logout') return handleLogout(req, res);
-  if (path === '/api/admin/prepare') return handlePrepare(req, res);
-  if (path === '/api/admin/draw') return handleDraw(req, res);
   if (path === '/api/health') return handleHealth(req, res);
   return sendError(res, 404, 'not_found', '接口不存在。');
 }

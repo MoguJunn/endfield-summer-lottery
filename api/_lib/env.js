@@ -47,25 +47,16 @@ export function getRuntimeConfig(env = process.env) {
     lotteryOrigin: normalizeOrigin(env.LOTTERY_SITE_URL),
     mainSiteOrigin: normalizeOrigin(env.MAIN_SITE_URL),
     backendSecret: normalizeString(env.LOTTERY_BACKEND_SECRET, 8192),
-    adminBackendSecret: normalizeString(env.LOTTERY_ADMIN_BACKEND_SECRET, 8192),
     sessionSecret: normalizeString(
       env.LOTTERY_SESSION_SECRET || (isDemo ? 'demo-only-session-secret-never-use-in-production-00000000' : ''),
       8192,
     ),
     sessionTtlSeconds: parsePositiveInteger(env.LOTTERY_SESSION_TTL_SECONDS, 7 * 24 * 60 * 60),
-    drawSecret: normalizeString(
-      env.LOTTERY_DRAW_SECRET || (isDemo ? 'demo-only-draw-secret-never-use-in-production-000000000' : ''),
-      8192,
-    ),
-    drawSeed: normalizeString(
-      env.LOTTERY_DRAW_SEED || (isDemo ? 'demo-only-draw-seed-never-use-in-production-00000000000' : ''),
-      8192,
-    ),
     audience: normalizeString(env.LOTTERY_SSO_AUDIENCE || DEFAULT_SSO_AUDIENCE, 100),
   };
 }
 
-export function getMissingRuntimeKeys(config, { includeDraw = false } = {}) {
+export function getMissingRuntimeKeys(config) {
   const required = [
     ['LOTTERY_SITE_URL', config.lotteryOrigin],
     ['LOTTERY_SESSION_SECRET', isStrongSecret(config.sessionSecret)],
@@ -80,16 +71,6 @@ export function getMissingRuntimeKeys(config, { includeDraw = false } = {}) {
       ['MAIN_SITE_URL', config.mainSiteOrigin],
       ['LOTTERY_BACKEND_SECRET', isStrongSecret(config.backendSecret)],
     );
-  }
-
-  if (includeDraw) {
-    required.push(
-      ['LOTTERY_DRAW_SECRET', isStrongSecret(config.drawSecret)],
-      ['LOTTERY_DRAW_SEED', isStrongSecret(config.drawSeed)],
-    );
-    if (!config.isDemo) {
-      required.push(['LOTTERY_ADMIN_BACKEND_SECRET', isStrongSecret(config.adminBackendSecret)]);
-    }
   }
 
   return required.filter(([, value]) => !value).map(([key]) => key);

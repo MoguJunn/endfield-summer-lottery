@@ -12,7 +12,7 @@ export class LotteryBackendError extends Error {
 
 export async function callLotteryBackend(action, payload = {}, env = process.env) {
   const config = getRuntimeConfig(env);
-  const secret = ['prepare', 'draw'].includes(action) ? config.adminBackendSecret : config.backendSecret;
+  const secret = config.backendSecret;
   if (!config.mainSiteOrigin || !secret) {
     throw new LotteryBackendError('lottery_backend_not_configured', '抽奖数据网关尚未配置。', 503);
   }

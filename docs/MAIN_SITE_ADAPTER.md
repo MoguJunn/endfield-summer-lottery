@@ -17,9 +17,8 @@
 ## 鉴权
 
 - `snapshot`、`exchange`、`enter`、`logout`、`health` 使用 `LOTTERY_BACKEND_SECRET`；
-- `prepare`、`draw` 使用不同的 `LOTTERY_ADMIN_BACKEND_SECRET`；
-- 两种请求均使用 `Authorization: Bearer <secret>`；
-- endpoint 只接受 POST，并应实现分布式限流和结构化审计。
+- 私有网关不接受 `prepare`、`draw`；这两个动作只允许主站短期管理员会话调用同源管理 API；
+- 私有网关使用 `Authorization: Bearer <secret>`，只接受 POST，并实现共享限流。
 
 ## 动作
 
@@ -31,7 +30,7 @@
 
 `logout` 撤销服务端活动 session；失败时活动站不会只清 Cookie 假装成功。
 
-`prepare` 固定 seed commitment；`draw` 获取固定公共随机轮次并调用事务 RPC。
+主站同源接口 `/api/admin-summer-lottery-operations` 使用短期超级管理员身份、Origin 校验、活动级确认词和共享限流执行 `prepare` / `draw`。`LOTTERY_DRAW_SEED` 只配置在主站；数据库事务 wrapper 将 actor 与操作写入不可修改的审计，并且不记录 seed。
 
 ## SSO
 
@@ -48,7 +47,7 @@
 
 ## 数据库
 
-迁移 160 是当前 Supabase/PostgreSQL adapter；迁移 161 为已应用旧版迁移的数据库收紧联系方式约束；迁移 162 增加联系方式保留期限、追加式访问审计、单条读取/删除与到期清理 RPC；迁移 163 增加 SSO 与私有网关动作的原子共享限流。参与 RPC 只接受版本化加密信封，拒绝明文。`service_role` 只能直接读取 entry 的安全元数据，不能绕过审计选择 `contact_value` 或枚举限流摘要。第三方实现其他数据库时应保持同等事务与保密语义，而不是照搬 PostgreSQL 异常文本作为公开协议。
+迁移 160 是当前 Supabase/PostgreSQL adapter；迁移 161 为已应用旧版迁移的数据库收紧联系方式约束；迁移 162 增加联系方式保留期限、追加式访问审计、单条读取/删除与到期清理 RPC；迁移 163 增加 SSO 与私有网关动作的原子共享限流；迁移 164 撤销旧 prepare/draw RPC 的 service role 权限，并增加绑定管理员 actor 的事务审计 wrapper。参与 RPC 只接受版本化加密信封，拒绝明文。`service_role` 只能直接读取 entry 的安全元数据，不能绕过审计选择 `contact_value`、枚举限流摘要或执行未审计开奖。第三方实现其他数据库时应保持同等事务与保密语义，而不是照搬 PostgreSQL 异常文本作为公开协议。
 
 限流 identifier 必须先在主站服务端使用 HMAC 匿名化；数据库拒绝原始 IP，只保留固定窗口计数和 64 位摘要约 48 小时。限流配置由数据库维护，私有网关调用方不能临时放大预算。
 

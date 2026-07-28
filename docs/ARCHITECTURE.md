@@ -27,9 +27,9 @@ Open Lottery API
 ## 数据面与控制面
 
 - 普通数据面：`snapshot`、`exchange`、`enter`、`logout`、`health`，使用 `LOTTERY_BACKEND_SECRET`；
-- 运营控制面：`prepare`、`draw`，使用不同的 `LOTTERY_ADMIN_BACKEND_SECRET`；
-- 活动站自己的运营入口再使用 `LOTTERY_DRAW_SECRET`；
-- 所有密钥都只存在于服务端。
+- 运营控制面：主站后台的短期管理员会话、Origin 校验、活动级确认词和共享限流；
+- `LOTTERY_DRAW_SEED` 只存在于主站服务端，活动站没有运营路由或 seed；
+- 迁移 164 撤销 service role 对旧 prepare/draw RPC 的直接执行权，强制通过写入操作审计的事务 wrapper。
 
 ## 多实例共享限流
 
@@ -43,7 +43,7 @@ Open Lottery API
 
 ## 开奖
 
-开放参与前，运营方通过 `prepare` 保存 `SHA-256(LOTTERY_DRAW_SEED)`。开奖时读取固定公共随机轮次，对每个有效 `public_id` 计算排序 hash。开奖 RPC 在事务中锁定活动、写入中奖者并保存公开复算材料，相同参数可幂等重试。
+开放参与前，运营方在主站后台通过短期管理员会话保存 `SHA-256(LOTTERY_DRAW_SEED)`。开奖时读取固定公共随机轮次，对每个有效 `public_id` 计算排序 hash。开奖 RPC 在事务中锁定活动、写入中奖者、追加管理员 actor 审计并保存公开复算材料，相同参数可幂等重试。审计不保存 seed。
 
 公共随机源固定为 drand Quicknet。服务端在写入开奖结果前、浏览器在复算公示快照时，都会使用固定链哈希、RFC9380 scheme 和 G2 公钥离线验证 BLS12-381 签名；relay HTTPS 只承担传输，不再是随机源真实性的信任根。
 

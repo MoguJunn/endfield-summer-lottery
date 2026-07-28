@@ -14,7 +14,7 @@
 - `main-site` 适配器在入库前使用 AES-256-GCM 加密联系方式，并支持按 key id 轮换；
 - 领奖联系方式不会进入公开活动快照、参与编号、中奖名单或开奖复算材料；
 - 浏览器响应经过显式字段白名单，provider 多返回的私有字段不会被透传；
-- 普通数据网关和准备/开奖控制面使用不同密钥；
+- 普通数据网关使用独立密钥，准备/开奖只接受主站短期管理员身份；
 - SSO、报名和私有网关动作使用 PostgreSQL 原子共享限流，多实例部署不会各自重置计数；
 - 开奖采用预先承诺的私有种子与固定 drand Quicknet 公共随机源，服务端和浏览器均使用固定链公钥验证 BLS 签名，并公开候选清单供复算；
 - 亮暗主题、移动端布局、键盘焦点和减少动效偏好。
@@ -62,12 +62,9 @@ provider 边界位于 `api/_lib/provider.js`。浏览器只调用本站同源 AP
 复制 `.env.example` 为 `.env.local`，然后按 [配置参考](docs/CONFIGURATION.md) 填写。生产环境至少需要分别生成：
 
 - `LOTTERY_SESSION_SECRET`：本站会话；
-- `LOTTERY_BACKEND_SECRET`：普通用户数据面；
-- `LOTTERY_ADMIN_BACKEND_SECRET`：准备和开奖控制面；
-- `LOTTERY_DRAW_SECRET`：本站运营接口；
-- `LOTTERY_DRAW_SEED`：开放参与前固定的开奖私有种子。
+- `LOTTERY_BACKEND_SECRET`：活动站到主站的普通用户数据面。
 
-这些值必须彼此不同，且每个值至少来自 32 个随机字节。不要把 `.env`、日志、数据库导出或领奖联系方式提交到仓库。
+这两个值必须彼此不同，且每个值至少来自 32 个随机字节。`LOTTERY_DRAW_SEED` 只配置在主站服务端；准备与开奖通过主站短期管理员会话执行，活动站不再持有 seed 或运营 Bearer 凭据。不要把 `.env`、日志、数据库导出或领奖联系方式提交到仓库。
 
 ## 主站集成
 

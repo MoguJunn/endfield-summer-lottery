@@ -48,8 +48,6 @@ describe('lottery same-origin API router', () => {
       MAIN_SITE_URL: 'https://main.example.com',
       LOTTERY_BACKEND_SECRET: 'backend-secret-which-is-at-least-forty-three-characters-long',
       LOTTERY_SESSION_SECRET: 'session-secret-which-is-at-least-forty-three-characters-long',
-      LOTTERY_DRAW_SECRET: 'draw-secret-which-is-at-least-forty-three-characters-long',
-      LOTTERY_DRAW_SEED: 'draw-seed-which-is-at-least-forty-three-characters-long',
       LOTTERY_CONTACT_FORMAT: 'qq',
       LOTTERY_NOTIFICATION_REQUIRED: 'true',
     });
@@ -60,8 +58,6 @@ describe('lottery same-origin API router', () => {
     delete process.env.MAIN_SITE_URL;
     delete process.env.LOTTERY_BACKEND_SECRET;
     delete process.env.LOTTERY_SESSION_SECRET;
-    delete process.env.LOTTERY_DRAW_SECRET;
-    delete process.env.LOTTERY_DRAW_SEED;
     delete process.env.LOTTERY_CONTACT_FORMAT;
     delete process.env.LOTTERY_NOTIFICATION_REQUIRED;
   });
@@ -139,6 +135,18 @@ describe('lottery same-origin API router', () => {
     await handler(request('/api/auth-pow-challenge'), response);
     expect(response.statusCode).toBe(200);
     expect(response.body.data.challenge).toEqual({ action: 'lottery_enter', signature: 'signed' });
+  });
+
+  it('does not expose long-lived bearer prepare or draw routes', async () => {
+    for (const path of ['/api/admin/prepare', '/api/admin/draw']) {
+      const response = responseRecorder();
+      await handler(request(path, {
+        headers: { authorization: 'Bearer retired-long-lived-secret' },
+      }), response);
+      expect(response.statusCode).toBe(404);
+      expect(response.body.error.code).toBe('not_found');
+    }
+    expect(mocks.callLotteryProvider).not.toHaveBeenCalled();
   });
 
   it('rejects a callback whose state does not match this browser cookie', async () => {

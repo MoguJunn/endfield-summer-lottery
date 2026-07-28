@@ -9,13 +9,12 @@ const ENV = {
   MAIN_SITE_URL: 'https://main.example.test',
   LOTTERY_SESSION_SECRET: 's'.repeat(43),
   LOTTERY_BACKEND_SECRET: 'user-data-secret'.padEnd(43, 'u'),
-  LOTTERY_ADMIN_BACKEND_SECRET: 'admin-control-secret'.padEnd(43, 'a'),
 };
 
 describe('main-site backend client', () => {
   afterEach(() => vi.unstubAllGlobals());
 
-  it('uses a separate secret for draw actions and sends contract version 1', async () => {
+  it('uses the user data secret and sends contract version 1', async () => {
     const fetchMock = vi.fn().mockResolvedValue({
       ok: true,
       status: 200,
@@ -24,13 +23,13 @@ describe('main-site backend client', () => {
     vi.stubGlobal('fetch', fetchMock);
 
     await callLotteryBackend('snapshot', {}, ENV);
-    await callLotteryBackend('draw', { seed: 'seed' }, ENV);
 
     const userRequest = fetchMock.mock.calls[0][1];
-    const adminRequest = fetchMock.mock.calls[1][1];
     expect(userRequest.headers.Authorization).toBe(`Bearer ${ENV.LOTTERY_BACKEND_SECRET}`);
-    expect(adminRequest.headers.Authorization).toBe(`Bearer ${ENV.LOTTERY_ADMIN_BACKEND_SECRET}`);
-    expect(JSON.parse(adminRequest.body)).toEqual(expect.objectContaining({ version: 1, action: 'draw' }));
+    expect(JSON.parse(userRequest.body)).toEqual(expect.objectContaining({
+      version: 1,
+      action: 'snapshot',
+    }));
   });
 
   it('sends only the generic contact contract without legacy QQ aliases', async () => {

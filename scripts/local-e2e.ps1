@@ -33,10 +33,8 @@ $DatabaseContainer = "supabase_db_$ProjectId"
 $TestEmail = 'demo-participant@example.local'
 $TestPassword = 'OpenLotteryDemo2026!'
 $GatewaySecret = 'local-e2e-backend-secret-please-never-use-in-production-000'
-$AdminGatewaySecret = 'local-e2e-admin-backend-secret-never-use-in-production-000'
 $MainSessionSecret = 'local-e2e-main-session-secret-please-never-use-in-production-00'
 $LotterySessionSecret = 'local-e2e-lottery-session-secret-never-use-in-production-000'
-$DrawSecret = 'local-e2e-draw-admin-secret-please-never-use-in-production-00'
 $DrawSeed = 'local-e2e-private-draw-seed-please-never-use-in-production-000'
 $ContactEncryptionKey = 'MDEyMzQ1Njc4OWFiY2RlZjAxMjM0NTY3ODlhYmNkZWY'
 
@@ -165,7 +163,6 @@ function Set-LocalEnvironment($Status) {
   $env:LOTTERY_NOTIFICATION_REQUIRED = 'true'
   $env:LOTTERY_NOTIFICATION_VALUE = 'demo-notifications'
   $env:LOTTERY_BACKEND_SECRET = $GatewaySecret
-  $env:LOTTERY_ADMIN_BACKEND_SECRET = $AdminGatewaySecret
   $env:LOTTERY_CONTACT_ENCRYPTION_ACTIVE_KEY_ID = 'local-e2e'
   $env:LOTTERY_CONTACT_ENCRYPTION_KEYS_JSON = "{`"local-e2e`":`"$ContactEncryptionKey`"}"
   $env:APP_SESSION_SECRET = $MainSessionSecret
@@ -188,7 +185,6 @@ function Set-LocalEnvironment($Status) {
   $env:VITE_AUTH_OAUTH_QQ_ENABLED = 'false'
   $env:LOTTERY_SESSION_SECRET = $LotterySessionSecret
   $env:LOTTERY_SESSION_TTL_SECONDS = '604800'
-  $env:LOTTERY_DRAW_SECRET = $DrawSecret
   $env:LOTTERY_DRAW_SEED = $DrawSeed
 }
 
@@ -211,6 +207,11 @@ function Seed-TestUser($Status) {
       throw
     }
   }
+  $Sql = "UPDATE public.profiles SET role = 'super_admin' WHERE email = '$TestEmail';"
+  docker exec $DatabaseContainer psql -v ON_ERROR_STOP=1 -U postgres -d postgres -c $Sql | Out-Null
+  if ($LASTEXITCODE -ne 0) {
+    throw 'Failed to grant the local test user super-admin operator access.'
+  }
 }
 
 function Start-WebApps($Status) {
@@ -224,6 +225,7 @@ function Start-WebApps($Status) {
   $env:VITE_AUTH_CAPTCHA_MODE = 'off'
   $MainProcess = Start-Process -FilePath 'npm.cmd' -ArgumentList @('exec', 'vite', '--', '--port', '5173', '--strictPort') -WorkingDirectory $MainRoot -RedirectStandardOutput $MainOut -RedirectStandardError $MainErr -PassThru
   Set-Content -LiteralPath $MainPidPath -Value $MainProcess.Id -Encoding ascii
+  Remove-Item Env:LOTTERY_DRAW_SEED -ErrorAction SilentlyContinue
   $env:VITE_AUTH_CAPTCHA_MODE = 'enforce'
   $LotteryProcess = Start-Process -FilePath 'npm.cmd' -ArgumentList @('exec', 'vite', '--', '--port', '5175', '--strictPort') -WorkingDirectory $LotteryRoot -RedirectStandardOutput $LotteryOut -RedirectStandardError $LotteryErr -PassThru
   Set-Content -LiteralPath $LotteryPidPath -Value $LotteryProcess.Id -Encoding ascii
@@ -231,9 +233,34 @@ function Start-WebApps($Status) {
   Wait-Http 'http://localhost:5175/'
 }
 
-function Prepare-Campaign {
-  $Headers = @{ Authorization = "Bearer $DrawSecret" }
-  Invoke-RestMethod -Method Post -Uri 'http://localhost:5175/api/admin/prepare' -Headers $Headers | Out-Null
+function Invoke-MainOperatorAction($Status, [string]$Operation) {
+  $LoginHeaders = @{
+    apikey = [string]$Status.ANON_KEY
+    'Content-Type' = 'application/json'
+  }
+  $LoginBody = @{
+    email = $TestEmail
+    password = $TestPassword
+  } | ConvertTo-Json
+  $Login = Invoke-RestMethod -Method Post -Uri "$($Status.API_URL)/auth/v1/token?grant_type=password" -Headers $LoginHeaders -Body $LoginBody
+  if (-not $Login.access_token) {
+    throw 'Could not obtain the local short-lived operator identity.'
+  }
+  $Headers = @{
+    Authorization = "Bearer $($Login.access_token)"
+    Origin = 'http://localhost:5173'
+    'Content-Type' = 'application/json'
+  }
+  $Body = @{
+    action = $Operation
+    campaignId = 'community-lottery'
+    confirmation = "$($Operation.ToUpperInvariant()) community-lottery"
+  } | ConvertTo-Json
+  Invoke-RestMethod -Method Post -Uri 'http://localhost:5173/api/admin-summer-lottery-operations' -Headers $Headers -Body $Body | Out-Null
+}
+
+function Prepare-Campaign($Status) {
+  Invoke-MainOperatorAction $Status 'prepare'
 }
 
 function Start-LocalE2E {
@@ -255,7 +282,7 @@ function Start-LocalE2E {
   Seed-TestUser $Status
   Write-Step 'Start main site and lottery site'
   Start-WebApps $Status
-  Prepare-Campaign
+  Prepare-Campaign $Status
   @{
     apiUrl = $Status.API_URL
     anonKey = $Status.ANON_KEY
@@ -288,8 +315,7 @@ function Draw-LocalCampaign {
   if ($LASTEXITCODE -ne 0) {
     throw 'Failed to update the local campaign timeline.'
   }
-  $Headers = @{ Authorization = "Bearer $DrawSecret" }
-  Invoke-RestMethod -Method Post -Uri 'http://localhost:5175/api/admin/draw' -Headers $Headers | Out-Null
+  Invoke-MainOperatorAction $Status 'draw'
   Write-Host "Local draw completed with drand Quicknet round $Round. Refresh the results page to verify." -ForegroundColor Green
   Start-Process 'http://localhost:5175/#results'
 }

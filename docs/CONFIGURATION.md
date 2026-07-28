@@ -18,9 +18,8 @@
 | `MAIN_SITE_URL` | 主站公开 origin |
 | `LOTTERY_SSO_AUDIENCE` | 一次性 SSO ticket 的 audience |
 | `LOTTERY_BACKEND_SECRET` | 普通数据面网关密钥 |
-| `LOTTERY_ADMIN_BACKEND_SECRET` | 只允许准备和开奖的控制面密钥 |
 
-两个网关密钥必须不同。主站和活动站服务端各配置同一对值，浏览器不能读取。
+主站和活动站服务端配置相同的 `LOTTERY_BACKEND_SECRET`，浏览器不能读取。准备与开奖不经过该网关，也不接受长期 Bearer 凭据。
 
 联系方式加密密钥不属于独立活动站配置。它只配置在 `main-site` 主站服务端：
 
@@ -28,22 +27,23 @@
 |---|---|
 | `LOTTERY_CONTACT_ENCRYPTION_ACTIVE_KEY_ID` | 新报名使用的 key id |
 | `LOTTERY_CONTACT_ENCRYPTION_KEYS_JSON` | key id 到 32 字节 base64url 密钥的 JSON；轮换期间可同时保留旧 key |
+| `LOTTERY_DRAW_SEED` | 只配置在主站服务端；开放参与前固定，开奖后公开 |
 | `CRON_SECRET` | 主站 Vercel 每日联系方式到期清理任务的鉴权密钥 |
 
-这组密钥不得使用 `VITE_` 前缀，也不得与两个网关密钥、数据库 service role、会话或开奖密钥复用。生成与轮换步骤见 [联系方式加密](CONTACT_ENCRYPTION.md)。
+这组密钥不得使用 `VITE_` 前缀，也不得与数据网关密钥、数据库 service role 或会话密钥复用。生成与轮换步骤见 [联系方式加密](CONTACT_ENCRYPTION.md)。
 
 联系方式期限存放在数据库 `summer_lottery_campaigns.contact_retention_until`，不由活动站环境变量覆盖。迁移 162 对已有活动默认回填为计划开奖后 30 天；生产部署必须在开放参与前改成活动规则承诺的准确时间。
 
-## 本站会话与运营
+## 本站会话
 
 | 变量 | 说明 |
 |---|---|
 | `LOTTERY_SESSION_SECRET` | 派生活动站 session token hash |
 | `LOTTERY_SESSION_TTL_SECONDS` | 活动站会话最长有效期 |
-| `LOTTERY_DRAW_SECRET` | 活动站 `/api/admin/*` bearer 凭据 |
-| `LOTTERY_DRAW_SEED` | 开放参与前固定，开奖后公开 |
 
 生产密钥至少来自 32 个随机字节。不要复用主站 session secret、数据库密钥或 CAPTCHA secret。
+
+运营人员在主站后台使用短期超级管理员会话、Origin 校验和活动级确认词调用 `/api/admin-summer-lottery-operations`。活动站没有 `/api/admin/prepare` 或 `/api/admin/draw` 路由。
 
 ## 页面与奖品
 
