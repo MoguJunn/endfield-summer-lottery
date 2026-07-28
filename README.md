@@ -82,6 +82,7 @@ Windows 本地完整集成流程仍可使用：
 npm run local:e2e
 npm run local:e2e:check
 npm run local:e2e:draw
+npm run local:e2e:contact
 npm run local:e2e:verify
 npm run local:e2e:stop
 ```
@@ -90,12 +91,12 @@ npm run local:e2e:stop
 
 ## 隐私与公平性
 
-联系方式是私密运营数据。`main-site` 适配器会在入库前生成 AES-256-GCM 信封；兑奖只允许超级管理员单条审计读取，模板默认在计划开奖 30 天后停止读取并由每日任务清除在线密文。部署前仍必须把期限改成活动规则承诺的准确时间，并建立备份过期策略。详见 [隐私说明](docs/PRIVACY.md) 与 [联系方式加密](docs/CONTACT_ENCRYPTION.md)。
+联系方式是私密运营数据。`main-site` 适配器会在入库前生成 AES-256-GCM 信封；兑奖只允许持有当前活动显式 `contact_read` capability 的人员单条审计读取，隐私删除另需 `contact_purge`，全局 `super_admin` 不会自动继承。模板默认在计划开奖 30 天后停止读取并由每日任务清除在线密文。部署前仍必须把期限改成活动规则承诺的准确时间，并建立备份过期策略。详见 [隐私说明](docs/PRIVACY.md) 与 [联系方式加密](docs/CONTACT_ENCRYPTION.md)。
 
 当前 `main-site` provider 固定 drand Quicknet 链哈希、RFC9380 scheme 和 G2 公钥；服务端在开奖写库前验证 round、randomness 和 BLS12-381 签名，浏览器对公示快照离线执行同样验证。生产限制见 [生产就绪清单](docs/PRODUCTION_READINESS.md)。
 
 ## 项目状态
 
-当前版本是 `0.1.0` 初始开源版：演示模式、配置边界、接口白名单、联系方式静态加密、单条兑奖审计、数据保留自动化、drand BLS 验证、CI、Apache-2.0 许可证和治理文件已具备；通用 OIDC adapter、独立兑奖角色和独立生产数据库仍在路线图中。
+当前版本是 `0.1.0` 初始开源版：演示模式、配置边界、接口白名单、联系方式静态加密、独立兑奖 capability、单条兑奖审计、数据保留自动化、drand BLS 验证、CI、Apache-2.0 许可证和治理文件已具备；通用 OIDC adapter 和独立生产数据库仍在路线图中。
 
 参与贡献前请阅读 [CONTRIBUTING.md](CONTRIBUTING.md) 与 [SECURITY.md](SECURITY.md)。

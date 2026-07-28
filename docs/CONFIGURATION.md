@@ -45,6 +45,8 @@
 
 运营人员在主站后台使用短期超级管理员会话、Origin 校验和活动级确认词调用 `/api/admin-summer-lottery-operations`。活动站没有 `/api/admin/prepare` 或 `/api/admin/draw` 路由。
 
+兑奖联系方式不从 `profiles.role` 自动继承。超级管理员在主站抽奖后台按用户 UUID 和活动分别授予 `contact_read`（列表与单条读取）或 `contact_purge`（隐私删除）；兑奖人员使用 `/lottery-contacts`，移动端使用 `/m/lottery-contacts`。生产部署前必须撤销不再参与发奖的授权，并确认授权审计已写入。
+
 ## 页面与奖品
 
 `LOTTERY_BRAND_*`、`LOTTERY_HERO_*` 与 `LOTTERY_ENTRY_PREFIX` 控制页面文案。`LOTTERY_PRIZES_JSON` 是最多 8 项的 JSON 数组，每项支持：

@@ -19,7 +19,8 @@
 - 联系方式 30 天默认保留期、单条审计读取、隐私请求删除和每日到期清理任务；
 - 服务端与浏览器端固定 Quicknet 链公钥的 RFC9380 BLS12-381 签名验证；
 - SSO 与私有网关动作的 PostgreSQL 原子共享限流和短期 HMAC 标识存储；
-- 主站短期管理员准备/开奖入口，以及绑定 actor 且不保存 seed 的事务审计。
+- 主站短期管理员准备/开奖入口，以及绑定 actor 且不保存 seed 的事务审计；
+- 按活动授予的兑奖读取 / 删除 capability、授权变更审计和普通用户专用兑奖工作台。
 
 ### 变更
 
@@ -29,7 +30,8 @@
 - 私有网关不再发送 `contactQq` / `groupJoined` 旧字段别名；
 - 页面公开内容由服务端配置白名单下发；
 - `service_role` 不再能直接读取联系方式列，兑奖读取必须经过受控 RPC 和追加式审计；
-- 活动站移除长期 Bearer 运营路由和 draw seed，旧私有网关不再接受 `prepare` / `draw`。
+- 活动站移除长期 Bearer 运营路由和 draw seed，旧私有网关不再接受 `prepare` / `draw`；
+- 全局 `super_admin` 不再隐式获得联系方式权限，API 与数据库 RPC 均校验显式 capability。
 
 ### 移除
 

@@ -30,7 +30,7 @@
 
 ## 当前已知限制
 
-- `main-site` provider 已加密联系方式，并提供单条访问审计与自动删除任务；兑奖入口目前仍使用主站 `super_admin`，尚未拆分独立最小权限角色；
+- `main-site` provider 已加密联系方式，并提供单条访问审计与自动删除任务；兑奖读取与删除使用按活动显式授予的独立 capability，全局 `super_admin` 不会自动继承；
 - drand Quicknet 链哈希、scheme 与 G2 公钥固定在服务端和浏览器验证模块中；round、`SHA-256(signature) = randomness` 与 RFC9380 BLS12-381 签名均需通过；
 - 抽奖 SSO 与私有网关已使用 PostgreSQL 原子共享限流；数据库不可用或响应异常时敏感动作会失败关闭；
 - 准备与开奖已收回主站短期超级管理员会话，并在数据库事务内记录 actor；活动站长期 Bearer 运营入口已移除。

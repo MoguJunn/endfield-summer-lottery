@@ -70,4 +70,4 @@ node --input-type=module -e "import { randomBytes } from 'node:crypto'; console.
 
 模板将已有活动回填为计划开奖后 30 天。生产活动必须在开放参与前将 `contact_retention_until` 改成规则中承诺的准确期限。主站 Vercel Cron 每日调用 `/api/summer-lottery-contact-retention`；即使任务延迟，过期读取也会失败关闭。
 
-当前管理界面仍使用主站 `super_admin`，尚未拆出独立兑奖角色。更高安全等级可将加密迁移到支持“只允许加密”权限的 KMS，使普通报名网关不具备解密能力。删除在线密文也不会追溯删除已生成的数据库备份，旧 key 只有在相关备份全部过期后才能退役。
+迁移 165 将兑奖权限拆成按活动显式授予的 `contact_read` 与 `contact_purge` capability；全局 `super_admin` 不会自动继承。超级管理员只能通过受控接口授予或撤销，变更写入不可修改审计；兑奖人员使用 `/lottery-contacts`（移动端 `/m/lottery-contacts`）工作台，不能进入其他后台功能或执行开奖。更高安全等级可将加密迁移到支持“只允许加密”权限的 KMS，使普通报名网关不具备解密能力。删除在线密文也不会追溯删除已生成的数据库备份，旧 key 只有在相关备份全部过期后才能退役。

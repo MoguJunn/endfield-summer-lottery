@@ -47,10 +47,10 @@
 
 ## 数据库
 
-迁移 160 是当前 Supabase/PostgreSQL adapter；迁移 161 为已应用旧版迁移的数据库收紧联系方式约束；迁移 162 增加联系方式保留期限、追加式访问审计、单条读取/删除与到期清理 RPC；迁移 163 增加 SSO 与私有网关动作的原子共享限流；迁移 164 撤销旧 prepare/draw RPC 的 service role 权限，并增加绑定管理员 actor 的事务审计 wrapper。参与 RPC 只接受版本化加密信封，拒绝明文。`service_role` 只能直接读取 entry 的安全元数据，不能绕过审计选择 `contact_value`、枚举限流摘要或执行未审计开奖。第三方实现其他数据库时应保持同等事务与保密语义，而不是照搬 PostgreSQL 异常文本作为公开协议。
+迁移 160 是当前 Supabase/PostgreSQL adapter；迁移 161 为已应用旧版迁移的数据库收紧联系方式约束；迁移 162 增加联系方式保留期限、追加式访问审计、单条读取/删除与到期清理 RPC；迁移 163 增加 SSO 与私有网关动作的原子共享限流；迁移 164 撤销旧 prepare/draw RPC 的 service role 权限，并增加绑定管理员 actor 的事务审计 wrapper；迁移 165 增加按活动授权的 `contact_read` / `contact_purge` capability、授权变更审计，并撤销可绕过 capability 的旧联系方式 RPC。参与 RPC 只接受版本化加密信封，拒绝明文。`service_role` 只能直接读取 entry 的安全元数据，不能绕过审计选择 `contact_value`、枚举限流摘要、伪造兑奖 actor 或执行未审计开奖。第三方实现其他数据库时应保持同等事务与保密语义，而不是照搬 PostgreSQL 异常文本作为公开协议。
 
 限流 identifier 必须先在主站服务端使用 HMAC 匿名化；数据库拒绝原始 IP，只保留固定窗口计数和 64 位摘要约 48 小时。限流配置由数据库维护，私有网关调用方不能临时放大预算。
 
 联系方式加密 keyring 只配置在主站服务端，不能发送给活动站或数据库。配置和轮换流程见 [联系方式加密](CONTACT_ENCRYPTION.md)。
 
-主站管理接口 `/api/admin-summer-lottery-contacts` 使用站点超级管理员会话，只提供中奖目标列表、单条解密和单条隐私删除。定时接口 `/api/summer-lottery-contact-retention` 由 Vercel Cron 使用 `CRON_SECRET` 每日调用，不向浏览器公开密文。
+主站管理接口 `/api/admin-summer-lottery-contacts` 接受主站有效会话，但必须持有目标活动的显式 capability：列表与单条解密需要 `contact_read`，单条隐私删除需要 `contact_purge`；全局 `super_admin` 不自动继承。超级管理员通过 `/api/admin-summer-lottery-permissions` 授予或撤销，并由数据库写入授权审计。兑奖人员使用 `/lottery-contacts`（移动端 `/m/lottery-contacts`），不能进入完整超级管理员后台或执行开奖。定时接口 `/api/summer-lottery-contact-retention` 由 Vercel Cron 使用 `CRON_SECRET` 每日调用，不向浏览器公开密文。

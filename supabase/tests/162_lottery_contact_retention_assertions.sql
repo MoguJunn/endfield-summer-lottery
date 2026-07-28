@@ -65,13 +65,29 @@ INSERT INTO public.summer_lottery_winners (
   1
 );
 
+INSERT INTO public.summer_lottery_operator_grants (
+  campaign_id, user_id, capability, granted_by
+) VALUES
+  (
+    'contact-retention-test',
+    '44444444-4444-4444-8444-444444444444',
+    'contact_read',
+    '44444444-4444-4444-8444-444444444444'
+  ),
+  (
+    'contact-retention-test',
+    '44444444-4444-4444-8444-444444444444',
+    'contact_purge',
+    '44444444-4444-4444-8444-444444444444'
+  );
+
 CREATE TEMP TABLE contact_retention_results (
   key TEXT PRIMARY KEY,
   value JSONB NOT NULL
 );
 
 SELECT ok(
-  has_function_privilege('service_role', 'public.list_summer_lottery_contact_targets(text)', 'EXECUTE'),
+  has_function_privilege('service_role', 'public.list_summer_lottery_contact_targets(text,uuid)', 'EXECUTE'),
   'service_role can list non-sensitive contact targets'
 );
 SELECT ok(
@@ -108,7 +124,10 @@ SELECT ok(
 );
 
 INSERT INTO contact_retention_results (key, value)
-SELECT 'targets', public.list_summer_lottery_contact_targets('contact-retention-test');
+SELECT 'targets', public.list_summer_lottery_contact_targets(
+  'contact-retention-test',
+  '44444444-4444-4444-8444-444444444444'
+);
 
 SELECT is(
   jsonb_array_length((SELECT value->'targets' FROM contact_retention_results WHERE key = 'targets')),

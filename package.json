@@ -22,6 +22,7 @@
     "local:e2e": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/local-e2e.ps1 Start",
     "local:e2e:check": "node scripts/local-e2e-smoke.mjs",
     "local:e2e:draw": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/local-e2e.ps1 Draw",
+    "local:e2e:contact": "node scripts/local-e2e-contact-operator.mjs",
     "local:e2e:verify": "node scripts/local-e2e-verify.mjs",
     "local:e2e:reset": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/local-e2e.ps1 Reset",
     "local:e2e:stop": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/local-e2e.ps1 Stop"

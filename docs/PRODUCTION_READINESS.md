@@ -8,7 +8,7 @@
 - [ ] 确认所有品牌图片、字体和文案可再分发；
 - [x] 为 `main-site` 联系方式实现 AES-256-GCM 应用层静态加密与 key id 轮换；
 - [x] 实现联系方式保留期限、每日删除任务和管理员单条访问审计；
-- [ ] 将兑奖权限从主站 `super_admin` 拆分为独立最小权限角色；
+- [x] 将兑奖权限从主站 `super_admin` 拆分为按活动授权的读取 / 删除最小 capability；
 - [x] 使用固定 Quicknet 链公钥验证 drand BLS 签名与 round；
 - [x] 将抽奖敏感入口的内存限流替换为 PostgreSQL 原子共享限流；
 - [x] 移除活动站长期运营 Bearer 入口，改用主站短期管理员身份与事务审计；
@@ -27,6 +27,8 @@
 - [ ] SSO Cookie 均为 host-only，生产使用 Secure；
 - [ ] 普通网关对 `prepare`、`draw` 返回 `action_not_allowed`，活动站 `/api/admin/*` 返回 404；
 - [ ] 主站管理员操作要求有效短期身份、Origin 和精确活动确认词，并产生不可修改审计；
+- [ ] 兑奖人员只持有目标活动所需的 `contact_read` / `contact_purge`，全局管理员未被误当成隐式授权；
+- [ ] 授权变更由当前超级管理员执行并产生不可修改审计，撤权后 API 与数据库 RPC 立即拒绝；
 - [ ] 迁移 163 已应用，SSO、报名和运营动作能返回数据库生成的 `Retry-After`；
 - [ ] 公开快照不包含联系方式、邮箱、内部角色或源 session；
 - [ ] prepare 在第一条参与记录产生前成功，commitment 已保存；

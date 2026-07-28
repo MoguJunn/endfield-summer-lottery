@@ -32,6 +32,8 @@ $DatabaseContainer = "supabase_db_$ProjectId"
 
 $TestEmail = 'demo-participant@example.local'
 $TestPassword = 'OpenLotteryDemo2026!'
+$ContactOperatorEmail = 'demo-contact-operator@example.local'
+$ContactOperatorPassword = 'OpenLotteryContactOperator2026!'
 $GatewaySecret = 'local-e2e-backend-secret-please-never-use-in-production-000'
 $MainSessionSecret = 'local-e2e-main-session-secret-please-never-use-in-production-00'
 $LotterySessionSecret = 'local-e2e-lottery-session-secret-never-use-in-production-000'
@@ -194,20 +196,53 @@ function Seed-TestUser($Status) {
     Authorization = "Bearer $($Status.SERVICE_ROLE_KEY)"
     'Content-Type' = 'application/json'
   }
-  $Body = @{
-    email = $TestEmail
-    password = $TestPassword
-    email_confirm = $true
-    user_metadata = @{ username = 'Demo Participant' }
-  } | ConvertTo-Json -Depth 4
-  try {
-    Invoke-RestMethod -Method Post -Uri "$($Status.API_URL)/auth/v1/admin/users" -Headers $Headers -Body $Body | Out-Null
-  } catch {
-    if ($_.Exception.Response.StatusCode.value__ -ne 422) {
-      throw
+  $LocalUsers = @(
+    @{
+      email = $TestEmail
+      password = $TestPassword
+      email_confirm = $true
+      user_metadata = @{ username = 'Demo Participant' }
+    },
+    @{
+      email = $ContactOperatorEmail
+      password = $ContactOperatorPassword
+      email_confirm = $true
+      user_metadata = @{ username = 'Demo Contact Operator' }
+    }
+  )
+  foreach ($LocalUser in $LocalUsers) {
+    $Body = $LocalUser | ConvertTo-Json -Depth 4
+    try {
+      Invoke-RestMethod -Method Post -Uri "$($Status.API_URL)/auth/v1/admin/users" -Headers $Headers -Body $Body | Out-Null
+    } catch {
+      if ($_.Exception.Response.StatusCode.value__ -ne 422) {
+        throw
+      }
     }
   }
-  $Sql = "UPDATE public.profiles SET role = 'super_admin' WHERE email = '$TestEmail';"
+  $Sql = @"
+UPDATE public.profiles
+SET role = 'super_admin'
+WHERE email = '$TestEmail';
+
+INSERT INTO public.summer_lottery_operator_grants (
+  campaign_id,
+  user_id,
+  capability,
+  granted_by
+)
+SELECT
+  'community-lottery',
+  operator.id,
+  capability,
+  grantor.id
+FROM public.profiles AS operator
+CROSS JOIN public.profiles AS grantor
+CROSS JOIN (VALUES ('contact_read'), ('contact_purge')) AS capability_list(capability)
+WHERE operator.email = '$ContactOperatorEmail'
+  AND grantor.email = '$TestEmail'
+ON CONFLICT (campaign_id, user_id, capability) DO NOTHING;
+"@
   docker exec $DatabaseContainer psql -v ON_ERROR_STOP=1 -U postgres -d postgres -c $Sql | Out-Null
   if ($LASTEXITCODE -ne 0) {
     throw 'Failed to grant the local test user super-admin operator access.'
@@ -289,6 +324,8 @@ function Start-LocalE2E {
     serviceRoleKey = $Status.SERVICE_ROLE_KEY
     email = $TestEmail
     password = $TestPassword
+    contactOperatorEmail = $ContactOperatorEmail
+    contactOperatorPassword = $ContactOperatorPassword
     mainUrl = 'http://localhost:5173/'
     lotteryUrl = 'http://localhost:5175/'
   } | ConvertTo-Json | Set-Content -LiteralPath $StatePath -Encoding UTF8
