@@ -5,13 +5,28 @@ function normalizeString(value, maxLength = 4096) {
   return String(value || '').trim().slice(0, maxLength);
 }
 
-function normalizeOrigin(value) {
+function normalizeBaseUrl(value) {
   try {
     const url = new URL(normalizeString(value));
-    if (!['http:', 'https:'].includes(url.protocol)) {
+    if (
+      !['http:', 'https:'].includes(url.protocol)
+      || url.username
+      || url.password
+      || url.search
+      || url.hash
+    ) {
       return '';
     }
-    return url.origin;
+    const pathname = url.pathname.replace(/\/+$/u, '');
+    return `${url.origin}${pathname === '/' ? '' : pathname}`;
+  } catch {
+    return '';
+  }
+}
+
+function getOrigin(baseUrl) {
+  try {
+    return new URL(baseUrl).origin;
   } catch {
     return '';
   }
@@ -35,6 +50,8 @@ function isStrongSecret(value) {
 export function getRuntimeConfig(env = process.env) {
   const provider = normalizeProvider(env.LOTTERY_PROVIDER);
   const isDemo = provider === 'demo';
+  const lotteryBaseUrl = normalizeBaseUrl(env.LOTTERY_SITE_URL);
+  const mainSiteBaseUrl = normalizeBaseUrl(env.MAIN_SITE_URL);
   const demoProductionBlocked = isDemo && (
     String(env.NODE_ENV || '').toLowerCase() === 'production'
     || String(env.VERCEL_ENV || '').toLowerCase() === 'production'
@@ -44,8 +61,9 @@ export function getRuntimeConfig(env = process.env) {
     isDemo,
     demoProductionBlocked,
     campaignId: normalizeString(env.LOTTERY_CAMPAIGN_ID || DEFAULT_CAMPAIGN_ID, 100),
-    lotteryOrigin: normalizeOrigin(env.LOTTERY_SITE_URL),
-    mainSiteOrigin: normalizeOrigin(env.MAIN_SITE_URL),
+    lotteryBaseUrl,
+    lotteryOrigin: getOrigin(lotteryBaseUrl),
+    mainSiteOrigin: getOrigin(mainSiteBaseUrl),
     backendSecret: normalizeString(env.LOTTERY_BACKEND_SECRET, 8192),
     sessionSecret: normalizeString(
       env.LOTTERY_SESSION_SECRET || (isDemo ? 'demo-only-session-secret-never-use-in-production-00000000' : ''),
@@ -58,7 +76,7 @@ export function getRuntimeConfig(env = process.env) {
 
 export function getMissingRuntimeKeys(config) {
   const required = [
-    ['LOTTERY_SITE_URL', config.lotteryOrigin],
+    ['LOTTERY_SITE_URL', config.lotteryBaseUrl],
     ['LOTTERY_SESSION_SECRET', isStrongSecret(config.sessionSecret)],
   ];
 

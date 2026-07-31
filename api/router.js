@@ -185,10 +185,10 @@ function handleSsoStart(req, res) {
       sessionTokenHash: material.sessionTokenHash,
     }).then(() => {
       setLotterySessionCookies(req, res, material);
-      return redirect(res, `${config.lotteryOrigin}/?auth=signed_in`);
+      return redirect(res, `${config.lotteryBaseUrl}/?auth=signed_in`);
     }).catch((error) => {
       const normalized = businessError(error);
-      return redirect(res, `${config.lotteryOrigin}/?auth=${normalized.code === 'rate_limited' ? 'rate_error' : 'service_error'}`);
+      return redirect(res, `${config.lotteryBaseUrl}/?auth=${normalized.code === 'rate_limited' ? 'rate_error' : 'service_error'}`);
     });
   }
   const state = createOpaqueToken();
@@ -294,6 +294,6 @@ export default async function handler(req, res) {
   if (path === '/api/auth/sso/start') return handleSsoStart(req, res);
   if (path === '/api/auth/sso/callback') return handleSsoCallback(req, res);
   if (path === '/api/auth/logout') return handleLogout(req, res);
-  if (path === '/api/health') return handleHealth(req, res);
+  if (path === '/api/health' || path === '/api/lottery/health') return handleHealth(req, res);
   return sendError(res, 404, 'not_found', '接口不存在。');
 }

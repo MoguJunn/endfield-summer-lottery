@@ -23,12 +23,14 @@ describe('runtime provider configuration', () => {
   it('requires only the user data gateway because operations stay on the main site', () => {
     const config = getRuntimeConfig({
       LOTTERY_PROVIDER: 'main-site',
-      LOTTERY_SITE_URL: 'https://lottery.example.test',
+      LOTTERY_SITE_URL: 'https://main.example.test/lottery/',
       MAIN_SITE_URL: 'https://main.example.test',
       LOTTERY_SESSION_SECRET: 's'.repeat(43),
       LOTTERY_BACKEND_SECRET: 'u'.repeat(43),
     });
     expect(getMissingRuntimeKeys(config)).toEqual([]);
+    expect(config.lotteryBaseUrl).toBe('https://main.example.test/lottery');
+    expect(config.lotteryOrigin).toBe('https://main.example.test');
     expect(config).not.toHaveProperty('adminBackendSecret');
     expect(config).not.toHaveProperty('drawSecret');
     expect(config).not.toHaveProperty('drawSeed');

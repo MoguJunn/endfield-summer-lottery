@@ -7,7 +7,7 @@
 | 变量 | 说明 |
 |---|---|
 | `LOTTERY_PROVIDER` | `demo` 或 `main-site` |
-| `LOTTERY_SITE_URL` | 活动站公开 origin，不带结尾斜杠 |
+| `LOTTERY_SITE_URL` | 活动站公开基础 URL，不带结尾斜杠；支持同域子路径，例如 `https://example.com/lottery` |
 | `LOTTERY_CAMPAIGN_ID` | 数据库和 provider 共同使用的活动标识 |
 | `LOTTERY_TIME_ZONE` | 页面日期显示时区，例如 `Asia/Shanghai` |
 
