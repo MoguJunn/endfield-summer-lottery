@@ -49,6 +49,10 @@
 
 ## 页面与奖品
 
+`LOTTERY_CAMPAIGN_STARTS_AT` 和数据库 `starts_at` 应在发布前同时设置为网站实际公开上线时间，不要沿用测试或模板日期。
+
+`LOTTERY_BODY_FONT_STYLESHEET_URL` 可以指定 `public` 下的 CSS 路径或完整 HTTPS URL，用于加载部署方确认有权使用的品牌字体。样式表可覆盖 `--font-sans`；主视觉英文标题保留独立展示字体，不受该变量影响。公开模板不附带私有字体文件。
+
 `LOTTERY_BRAND_*`、`LOTTERY_HERO_*` 与 `LOTTERY_ENTRY_PREFIX` 控制页面文案。`LOTTERY_PRIZES_JSON` 是最多 8 项的 JSON 数组，每项支持：
 
 ```json
@@ -73,6 +77,8 @@
 - `qq`：5–12 位且不以 0 开头。
 
 `LOTTERY_NOTIFICATION_REQUIRED=true` 时，用户必须勾选通知渠道确认。通知渠道名称、值和说明由 `LOTTERY_NOTIFICATION_*` 配置。服务端仍会重新验证格式和确认状态。
+
+联系方式输入框旁会固定显示“加密保存”。部署者仍应通过 `LOTTERY_CONTACT_PRIVACY_NOTICE` 说明使用目的、保存期限与删除承诺；该提示不能替代正式隐私政策。
 
 ## CAPTCHA / PoW
 

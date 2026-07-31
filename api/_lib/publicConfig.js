@@ -104,6 +104,7 @@ export function getPublicSiteConfig(env = process.env) {
 
   return {
     timeZone: normalizeTimeZone(env.LOTTERY_TIME_ZONE),
+    fontStylesheetUrl: normalizeAssetUrl(env.LOTTERY_BODY_FONT_STYLESHEET_URL),
     brand: {
       mark: text(env.LOTTERY_BRAND_MARK, 'OL', 4),
       name: text(env.LOTTERY_BRAND_NAME, 'Open Lottery', 80),

@@ -1,5 +1,6 @@
 export const DEFAULT_SITE_CONFIG = Object.freeze({
   timeZone: 'Asia/Shanghai',
+  fontStylesheetUrl: '',
   brand: {
     mark: 'OL',
     name: 'Open Lottery',

@@ -12,6 +12,7 @@ import {
   LogOut,
   LockKeyhole,
   MessageCircle,
+  Monitor,
   Moon,
   RefreshCw,
   ShieldCheck,
@@ -44,15 +45,20 @@ const AUTH_NOTICE = {
   rate_error: '登录请求过于频繁，请稍后重试。',
 };
 const THEME_KEY = 'summer_lottery_theme';
+const THEME_OPTIONS = Object.freeze([
+  { value: 'system', label: '跟随系统', Icon: Monitor },
+  { value: 'light', label: '亮色', Icon: Sun },
+  { value: 'dark', label: '暗色', Icon: Moon },
+]);
 
 function getInitialTheme() {
   try {
     const saved = window.localStorage.getItem(THEME_KEY);
-    if (saved === 'light' || saved === 'dark') return saved;
+    if (THEME_OPTIONS.some((option) => option.value === saved)) return saved;
   } catch {
     // Private browsing can disable localStorage.
   }
-  return window.matchMedia?.('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+  return 'system';
 }
 
 function formatEventTime(value, includeTime = true, timeZone = 'Asia/Shanghai') {
@@ -235,7 +241,10 @@ function ParticipationDialog({ busy, onClose, onSubmit, site }) {
                     : event.target.value,
                 )}
               />
-              <p className="privacy-note"><LockKeyhole />{site.contact.privacyNotice}</p>
+              <p className="privacy-note">
+                <LockKeyhole />
+                <span><strong>加密保存</strong>{site.contact.privacyNotice}</span>
+              </p>
             </div>
           </div>
 
@@ -282,7 +291,7 @@ function ParticipationDialog({ busy, onClose, onSubmit, site }) {
 
 function PrizePane({ prizes, prizePlan }) {
   return (
-    <div className="prize-strip">
+    <div className={`prize-strip prize-strip--${Math.min(prizes.length, 3)}`}>
       {prizes.map((prize, index) => {
         const count = prize.tier === 'participation' ? null : prizePlan?.[prize.tier] ?? 0;
         return (
@@ -375,9 +384,10 @@ export default function App() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
-  const [theme, setTheme] = useState(getInitialTheme);
+  const [themePreference, setThemePreference] = useState(getInitialTheme);
   const [activeTab, setActiveTab] = useState('prizes');
   const [entryDialogOpen, setEntryDialogOpen] = useState(false);
+  const site = snapshot?.site || DEFAULT_SITE_CONFIG;
 
   const refresh = useCallback(async ({ clearExistingError = true } = {}) => {
     if (clearExistingError) setError('');
@@ -391,9 +401,32 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    document.documentElement.dataset.theme = theme;
-    try { window.localStorage.setItem(THEME_KEY, theme); } catch { /* Theme still works for this tab. */ }
-  }, [theme]);
+    const root = document.documentElement;
+    const media = window.matchMedia?.('(prefers-color-scheme: dark)');
+    const applyTheme = () => {
+      root.dataset.theme = themePreference === 'system'
+        ? (media?.matches ? 'dark' : 'light')
+        : themePreference;
+      root.dataset.themePreference = themePreference;
+    };
+    applyTheme();
+    try { window.localStorage.setItem(THEME_KEY, themePreference); } catch { /* Theme still works for this tab. */ }
+    if (themePreference !== 'system' || !media) return undefined;
+    media.addEventListener?.('change', applyTheme);
+    return () => media.removeEventListener?.('change', applyTheme);
+  }, [themePreference]);
+
+  useEffect(() => {
+    const stylesheetId = 'lottery-body-fonts';
+    document.getElementById(stylesheetId)?.remove();
+    if (!site.fontStylesheetUrl) return undefined;
+    const stylesheet = document.createElement('link');
+    stylesheet.id = stylesheetId;
+    stylesheet.rel = 'stylesheet';
+    stylesheet.href = site.fontStylesheetUrl;
+    document.head.append(stylesheet);
+    return () => stylesheet.remove();
+  }, [site.fontStylesheetUrl]);
 
   useEffect(() => {
     const initialize = async () => {
@@ -426,7 +459,6 @@ export default function App() {
   }, [refresh]);
 
   const campaign = snapshot?.campaign;
-  const site = snapshot?.site || DEFAULT_SITE_CONFIG;
   const phase = campaign?.phase || 'unavailable';
   const phaseCopy = getPhaseCopy(phase);
   const countdownTarget = phase === 'open' ? campaign?.closesAt : campaign?.drawsAt || DEFAULT_DRAW_AT;
@@ -472,7 +504,21 @@ export default function App() {
         <div className="topbar__actions">
           <span className={`phase-chip phase-chip--${phase}`}><i />{phaseCopy.title}</span>
           {snapshot?.mainSiteUrl && <a className="icon-button" href={snapshot.mainSiteUrl} target="_blank" rel="noreferrer" title="返回主站"><ExternalLink /></a>}
-          <button className="theme-toggle" type="button" onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')} aria-label={`切换为${theme === 'light' ? '暗色' : '亮色'}主题`}><Sun /><span /><Moon /></button>
+          <div className="theme-selector" role="group" aria-label="页面主题">
+            {THEME_OPTIONS.map(({ value, label, Icon }) => (
+              <button
+                className={themePreference === value ? 'is-active' : ''}
+                type="button"
+                key={value}
+                title={label}
+                aria-label={label}
+                aria-pressed={themePreference === value}
+                onClick={() => setThemePreference(value)}
+              >
+                <Icon />
+              </button>
+            ))}
+          </div>
         </div>
       </header>
 

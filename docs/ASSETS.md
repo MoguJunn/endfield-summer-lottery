@@ -14,8 +14,10 @@
 - 中文默认使用系统字体栈：`PingFang SC`、`Hiragino Sans GB`、`Microsoft YaHei UI`、`Noto Sans SC`；
 - 数字与倒计时只加载 `@fontsource-variable/roboto-mono` 的 Latin 子集；上游采用 Apache License 2.0。
 
-这样可以避免把完整简体中文可变字体打进公开构建产物。部署者如果需要统一中文字体，可以通过自有 CDN 或私有素材包注入，并在活动配置中说明来源与许可。
+这样可以避免把完整简体中文可变字体打进公开构建产物。部署者如果需要统一中文字体，可以通过 `LOTTERY_BODY_FONT_STYLESHEET_URL` 从自有 CDN 或私有素材包注入，并在活动配置中说明来源与许可。品牌字体只覆盖正文，夏日嘉年华等主视觉英文标题继续使用独立展示字体。
 
 ## 私有品牌包
 
 真实活动可以通过 `LOTTERY_PRIZES_JSON[].imageUrl` 和品牌环境变量注入自己的图片与文案。私有品牌包不应放入公共仓库，除非维护者已经确认著作权、商标权和再分发许可。
+
+本地部署可把私有图片、字体和字体样式表放在 `public/local-activity/`。该目录会被 Vite 复制到构建产物，但已被 Git 忽略；正式部署时必须通过受控素材包或部署流程单独提供，不能假设它会随源码仓库存在。

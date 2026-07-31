@@ -15,4 +15,5 @@ Thumbs.db
 *.p12
 .local-e2e/
 public/.local-*
+public/local-activity/
 supabase/migrations/000_local_main_baseline.sql

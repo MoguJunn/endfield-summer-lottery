@@ -7,6 +7,7 @@ describe('public site configuration', () => {
   it('normalizes configurable content without exposing unrelated environment values', () => {
     const site = getPublicSiteConfig({
       LOTTERY_BRAND_NAME: 'Community Draw',
+      LOTTERY_BODY_FONT_STYLESHEET_URL: '/brand/fonts.css',
       LOTTERY_CONTACT_FORMAT: 'email',
       LOTTERY_NOTIFICATION_REQUIRED: 'true',
       LOTTERY_NOTIFICATION_VALUE: 'announcements',
@@ -18,6 +19,7 @@ describe('public site configuration', () => {
     });
 
     expect(site.brand.name).toBe('Community Draw');
+    expect(site.fontStylesheetUrl).toBe('/brand/fonts.css');
     expect(site.contact).toEqual(expect.objectContaining({
       format: 'email',
       notificationRequired: true,

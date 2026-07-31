@@ -45,6 +45,28 @@
   --hero-b: #0b6871;
 }
 
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme]) {
+    color-scheme: dark;
+    --bg: #07141e;
+    --surface: rgba(12, 31, 44, .9);
+    --surface-solid: #0d2231;
+    --surface-soft: #102e3e;
+    --ink: #e9f9ff;
+    --muted: #91b5c6;
+    --line: rgba(115, 209, 232, .18);
+    --blue: #39baf2;
+    --blue-deep: #74d4ff;
+    --cyan: #40e0df;
+    --orange: #ff9a40;
+    --yellow: #fff36a;
+    --green: #55d5b4;
+    --shadow: 0 20px 55px rgba(0, 0, 0, .35);
+    --hero-a: #082f50;
+    --hero-b: #0b6871;
+  }
+}
+
 * { box-sizing: border-box; }
 html, body, #root { min-width: 320px; min-height: 100%; }
 html { background: var(--bg); transition: background-color .3s ease; }
@@ -76,11 +98,11 @@ code, kbd, pre, samp { font-family: var(--font-code); }
 .icon-button { width: 36px; height: 36px; display: grid; place-items: center; border: 1px solid var(--line); border-radius: 50%; background: var(--surface-soft); cursor: pointer; transition: transform .2s ease, color .2s ease, background .2s ease; }
 .icon-button:hover { color: var(--blue); transform: translateY(-2px); }
 .icon-button svg { width: 15px; height: 15px; }
-.theme-toggle { width: 72px; height: 36px; padding: 4px 6px; display: grid; grid-template-columns: 16px 1fr 16px; align-items: center; gap: 4px; border: 1px solid var(--line); border-radius: 99px; color: var(--muted); background: var(--surface-soft); cursor: pointer; }
-.theme-toggle svg { width: 14px; height: 14px; }
-.theme-toggle span { height: 20px; position: relative; border-radius: 50px; background: color-mix(in srgb, var(--blue) 16%, transparent); }
-.theme-toggle span::after { content: ''; width: 14px; height: 14px; position: absolute; left: 3px; top: 3px; border-radius: 50%; background: var(--blue); box-shadow: 0 2px 5px rgba(0,0,0,.25); transition: transform .28s cubic-bezier(.2,.8,.2,1); }
-:root[data-theme='dark'] .theme-toggle span::after { transform: translateX(14px); }
+.theme-selector { height: 36px; padding: 3px; display: inline-flex; align-items: center; gap: 2px; border: 1px solid var(--line); border-radius: 99px; color: var(--muted); background: var(--surface-soft); }
+.theme-selector button { width: 28px; height: 28px; display: grid; place-items: center; border-radius: 50%; color: inherit; background: transparent; cursor: pointer; transition: color .2s ease, background-color .2s ease, transform .2s ease; }
+.theme-selector button:hover { color: var(--blue); transform: translateY(-1px); }
+.theme-selector button.is-active { color: #fff; background: var(--blue); box-shadow: 0 2px 6px rgba(3, 70, 110, .22); }
+.theme-selector svg { width: 14px; height: 14px; }
 
 .event-screen {
   min-height: 0; padding: 14px clamp(18px, 3.5vw, 68px); display: grid; grid-template-rows: minmax(350px, 1fr) minmax(230px, 33vh); gap: 14px;
@@ -249,6 +271,8 @@ code, kbd, pre, samp { font-family: var(--font-code); }
 .info-deck__body { min-height: 0; padding: 12px; overflow: auto; animation: pane-in .28s both; }
 
 .prize-strip { height: 100%; display: grid; grid-template-columns: 1.25fr 1fr 1fr; gap: 10px; }
+.prize-strip--1 { grid-template-columns: 1fr; }
+.prize-strip--2 { grid-template-columns: 1.25fr 1fr; }
 .prize-tile { min-width: 0; padding: 13px 15px; display: grid; grid-template-columns: 64px 1fr; align-items: center; gap: 13px; position: relative; overflow: hidden; border: 1px solid var(--line); background: var(--surface-soft); transition: transform .2s ease, border-color .2s ease; }
 .prize-tile:hover { transform: translateY(-2px); border-color: color-mix(in srgb, var(--blue) 42%, transparent); }
 .prize-tile--major { grid-template-columns: 118px 1fr; background: linear-gradient(120deg, color-mix(in srgb, var(--cyan) 16%, var(--surface-solid)), var(--surface-soft)); }
@@ -268,6 +292,9 @@ code, kbd, pre, samp { font-family: var(--font-code); }
 .gift-visual__fallback svg { width: 15px; height: 15px; justify-self: end; color: var(--yellow); }
 .gift-visual__fallback strong { font-size: 10px; }
 .gift-visual__fallback small { font-size: 5px; }
+.prize-strip--1 .prize-tile--major { grid-template-columns: minmax(150px, .42fr) 1fr; }
+.prize-strip--1 .gift-visual { width: 100%; }
+.prize-strip--1 .gift-visual img { max-width: 180px; max-height: 190px; }
 
 .rules-pane { height: 100%; display: grid; grid-template-columns: 1.55fr .75fr; gap: 8px; }
 .rule-list { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; }
