@@ -1,6 +1,6 @@
 {
   "name": "open-lottery",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "可配置、可验证并支持身份适配器的社区抽奖活动站",
   "private": true,
   "license": "Apache-2.0",
