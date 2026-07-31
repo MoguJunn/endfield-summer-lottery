@@ -308,19 +308,22 @@ function PrizePane({ prizes, prizePlan }) {
   );
 }
 
-function RulesPane({ campaign }) {
-  const rules = [
-    ['01', '登录即可参加', '使用活动账号登录，演示模式无需额外注册。'],
-    ['02', '每人只有一次机会', '每个账号只能参加一次，多次点击不会增加中奖机会。'],
-    ['03', '记得在截止前参加', '活动截止后无法补录，请以页面显示的活动状态为准。'],
-    ['04', '开奖结果可以复查', '开奖后会公布中奖名单和核对信息，任何人都可以自行检查。'],
-  ];
+function RulesPane({ campaign, rules }) {
+  const items = rules?.items?.length ? rules.items : DEFAULT_SITE_CONFIG.rules.items;
   return (
     <div className="rules-pane">
       <div className="rule-list">
-        {rules.map(([number, title, copy]) => <article key={number}><span>{number}</span><div><strong>{title}</strong><p>{copy}</p></div></article>)}
+        {items.map((item, index) => (
+          <article key={`${item.title}-${index}`}>
+            <span>{String(index + 1).padStart(2, '0')}</span>
+            <div><strong>{item.title}</strong><p>{item.description}</p></div>
+          </article>
+        ))}
       </div>
-      <aside className="commitment-card"><ShieldCheck /><strong>开奖核对码</strong><p>活动开始前已经锁定，开奖后会公开原始信息供大家核对。</p><code>{campaign?.seedCommitment || '活动准备完成后公布'}</code></aside>
+      <div className="rules-pane__aside">
+        <aside className="rules-notice"><Info /><strong>{rules?.version || '活动规则'}</strong><p>{rules?.notice || DEFAULT_SITE_CONFIG.rules.notice}</p></aside>
+        <aside className="commitment-card"><ShieldCheck /><strong>开奖核对码</strong><p>活动开始前已经锁定，开奖后会公开原始信息供大家核对。</p><code>{campaign?.seedCommitment || '活动准备完成后公布'}</code></aside>
+      </div>
     </div>
   );
 }
@@ -371,7 +374,7 @@ function InfoPane({ activeTab, snapshot, site }) {
       </div>
       <div className="info-deck__body" role="tabpanel" key={activeTab.value}>
         {activeTab.value === 'prizes' && <PrizePane prizes={site.prizes} prizePlan={snapshot?.campaign?.prizePlan} />}
-        {activeTab.value === 'rules' && <RulesPane campaign={snapshot?.campaign} />}
+        {activeTab.value === 'rules' && <RulesPane campaign={snapshot?.campaign} rules={site.rules} />}
         {activeTab.value === 'results' && <ResultsPane snapshot={snapshot} site={site} />}
       </div>
     </section>

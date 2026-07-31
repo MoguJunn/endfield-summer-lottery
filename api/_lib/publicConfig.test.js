@@ -15,6 +15,11 @@ describe('public site configuration', () => {
       LOTTERY_PRIZES_JSON: JSON.stringify([{
         tier: 'first', title: 'Prize', imageUrl: 'javascript:alert(1)',
       }]),
+      LOTTERY_RULES_JSON: JSON.stringify({
+        version: '2026 rules',
+        notice: 'Read before entering.',
+        items: [{ title: 'Eligibility', description: 'One entry per account.' }],
+      }),
       LOTTERY_SESSION_SECRET: 'must-not-be-public',
     });
 
@@ -28,6 +33,11 @@ describe('public site configuration', () => {
     expect(JSON.stringify(site)).not.toContain('must-not-be-public');
     expect(site.timeZone).toBe('UTC');
     expect(site.prizes[0].imageUrl).toBe('');
+    expect(site.rules).toEqual({
+      version: '2026 rules',
+      notice: 'Read before entering.',
+      items: [{ title: 'Eligibility', description: 'One entry per account.' }],
+    });
   });
 
   it('validates the supported contact formats', () => {

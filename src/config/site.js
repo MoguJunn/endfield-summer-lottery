@@ -31,6 +31,16 @@ export const DEFAULT_SITE_CONFIG = Object.freeze({
     { tier: 'second', rank: '02', title: '二等奖', description: '请配置二等奖内容。', icon: 'sparkles', imageUrl: '' },
     { tier: 'participation', rank: 'ALL', title: '参与纪念', description: '成功参与的用户可获得参与纪念。', icon: 'ticket', imageUrl: '' },
   ],
+  rules: {
+    version: '活动规则',
+    notice: '参与前请完整阅读规则；奖品、时间和领取方式以本页公示内容为准。',
+    items: [
+      { title: '登录即可参加', description: '使用活动账号登录并完成参与信息确认。' },
+      { title: '每个账号一次资格', description: '同一活动账号只能获得一个有效参与编号。' },
+      { title: '截止后不再补录', description: '请在页面显示的截止时间前完成参与。' },
+      { title: '开奖结果可以复查', description: '开奖后会公开候选清单和核对信息。' },
+    ],
+  },
   entryPrefix: 'LOT',
 });
 

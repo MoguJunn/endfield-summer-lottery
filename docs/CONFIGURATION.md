@@ -68,6 +68,21 @@
 
 `icon` 只接受 `gift`、`sparkles`、`ticket`。`imageUrl` 可以是 `public` 下的路径或完整 HTTPS CDN URL。部署私有品牌素材时不要把它误提交到公共仓库。
 
+`LOTTERY_RULES_JSON` 用于配置规则页，包含规则版本 `version`、页面提示 `notice` 和最多 12 项 `items`。每项规则支持 `title` 与 `description`；活动方应在开放参与前明确公示参与资格、活动时间、奖品名额、开奖方式、领奖期限和异常处理办法。
+
+```json
+{
+  "version": "2026 活动规则",
+  "notice": "参与即表示已阅读并同意本页规则。",
+  "items": [
+    {
+      "title": "每个账号一次资格",
+      "description": "同一活动账号只能获得一个有效参与编号。"
+    }
+  ]
+}
+```
+
 ## 联系方式与通知
 
 `LOTTERY_CONTACT_FORMAT` 支持：

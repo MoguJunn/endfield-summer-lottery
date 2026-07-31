@@ -89,6 +89,34 @@ function parsePrizes(rawValue) {
   }
 }
 
+function parseRules(rawValue) {
+  const fallback = {
+    version: '活动规则',
+    notice: '参与前请完整阅读规则；奖品、时间和领取方式以本页公示内容为准。',
+    items: [
+      { title: '登录即可参加', description: '使用活动账号登录并完成参与信息确认。' },
+      { title: '每个账号一次资格', description: '同一活动账号只能获得一个有效参与编号。' },
+      { title: '截止后不再补录', description: '请在页面显示的截止时间前完成参与。' },
+      { title: '开奖结果可以复查', description: '开奖后会公开候选清单和核对信息。' },
+    ],
+  };
+  if (!rawValue) return fallback;
+  try {
+    const parsed = JSON.parse(rawValue);
+    if (!Array.isArray(parsed?.items) || !parsed.items.length) throw new Error('invalid_rules');
+    return {
+      version: text(parsed.version, fallback.version, 80),
+      notice: text(parsed.notice, fallback.notice, 300),
+      items: parsed.items.slice(0, 12).map((item, index) => ({
+        title: text(item?.title, `规则 ${index + 1}`, 100),
+        description: text(item?.description, '', 500),
+      })),
+    };
+  } catch {
+    return fallback;
+  }
+}
+
 export function getPublicSiteConfig(env = process.env) {
   const contactFormat = normalizeContactFormat(env.LOTTERY_CONTACT_FORMAT);
   const defaultContactLabel = contactFormat === 'qq'
@@ -139,6 +167,7 @@ export function getPublicSiteConfig(env = process.env) {
       confirmationLabel: text(env.LOTTERY_NOTIFICATION_CONFIRMATION_LABEL, '我已加入活动通知渠道', 140),
     },
     prizes: parsePrizes(env.LOTTERY_PRIZES_JSON),
+    rules: parseRules(env.LOTTERY_RULES_JSON),
     entryPrefix: text(env.LOTTERY_ENTRY_PREFIX, 'LOT', 12).replace(/[^A-Z0-9-]/giu, '').toUpperCase() || 'LOT',
   };
 }
