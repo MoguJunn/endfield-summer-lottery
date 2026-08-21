@@ -7,6 +7,7 @@ import {
   Copy,
   ExternalLink,
   Gift,
+  History,
   Info,
   LogIn,
   LogOut,
@@ -26,7 +27,7 @@ import {
 } from 'lucide-react';
 import LotteryCaptcha from './components/LotteryCaptcha.jsx';
 import { DEFAULT_SITE_CONFIG, getContactInputProps, isValidContactValue } from './config/site.js';
-import { enterLottery, exchangeSsoTicket, loadLottery, logoutLottery } from './services/api.js';
+import { enterLottery, exchangeSsoTicket, loadLottery, loadLotteryArchive, logoutLottery } from './services/api.js';
 import {
   DEFAULT_DRAW_AT,
   formatEntryNumber,
@@ -50,6 +51,11 @@ const THEME_OPTIONS = Object.freeze([
   { value: 'light', label: '亮色', Icon: Sun },
   { value: 'dark', label: '暗色', Icon: Moon },
 ]);
+
+function getArchiveCampaignId(pathname = window.location.pathname) {
+  const match = String(pathname || '').match(/\/lottery\/archive\/([a-z0-9][a-z0-9_-]{2,79})\/?$/u);
+  return match?.[1] || '';
+}
 
 function getInitialTheme() {
   try {
@@ -97,16 +103,25 @@ function Countdown({ targetAt }) {
 }
 
 function PrizeVisual({ prize, count }) {
-  const [hasImage, setHasImage] = useState(true);
+  const [failedImages, setFailedImages] = useState(() => new Set());
   const Icon = prize.icon === 'ticket' ? TicketCheck : prize.icon === 'sparkles' ? Sparkles : Gift;
+  const imageUrls = (Array.isArray(prize.imageUrls) && prize.imageUrls.length
+    ? prize.imageUrls
+    : [prize.imageUrl]).filter(Boolean);
+  const visibleImages = imageUrls.filter((url) => !failedImages.has(url));
   return (
-    <div className="gift-visual">
-      {prize.imageUrl && hasImage ? (
-        <img
-          src={prize.imageUrl}
-          alt={prize.title}
-          onError={() => setHasImage(false)}
-        />
+    <div className={`gift-visual ${visibleImages.length > 1 ? 'gift-visual--multiple' : ''}`}>
+      {visibleImages.length ? (
+        <div className="gift-visual__images">
+          {visibleImages.map((url, index) => (
+            <img
+              src={url}
+              alt={`${prize.title}奖品图${visibleImages.length > 1 ? ` ${index + 1}` : ''}`}
+              key={url}
+              onError={() => setFailedImages((current) => new Set(current).add(url))}
+            />
+          ))}
+        </div>
       ) : (
         <div className="gift-visual__fallback"><Icon /><strong>{prize.title}</strong><small>OPEN LOTTERY</small></div>
       )}
@@ -294,10 +309,11 @@ function PrizePane({ prizes, prizePlan }) {
     <div className={`prize-strip prize-strip--${Math.min(prizes.length, 3)}`}>
       {prizes.map((prize, index) => {
         const count = prize.tier === 'participation' ? null : prizePlan?.[prize.tier] ?? 0;
+        const hasVisual = Boolean(prize.imageUrl || prize.imageUrls?.length);
         return (
-          <article className={`prize-tile ${index === 0 ? 'prize-tile--major' : ''}`} key={`${prize.tier}-${index}`}>
+          <article className={`prize-tile ${index === 0 ? 'prize-tile--major' : ''} ${hasVisual ? 'prize-tile--visual' : ''}`} key={`${prize.tier}-${index}`}>
             <span className="prize-tile__rank">{prize.rank}</span>
-            {index === 0
+            {hasVisual
               ? <PrizeVisual prize={prize} count={count} />
               : <div className="prize-tile__icon">{prize.icon === 'ticket' ? <TicketCheck /> : prize.icon === 'sparkles' ? <Sparkles /> : <Gift />}</div>}
             <div><small>{count == null ? '成功参与即可获得' : `${count} 名`}</small><h3>{prize.title}</h3><p>{prize.description}</p></div>
@@ -382,6 +398,8 @@ function InfoPane({ activeTab, snapshot, site }) {
 }
 
 export default function App() {
+  const archiveCampaignId = useMemo(() => getArchiveCampaignId(), []);
+  const isArchive = Boolean(archiveCampaignId);
   const [snapshot, setSnapshot] = useState(null);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
@@ -395,13 +413,13 @@ export default function App() {
   const refresh = useCallback(async ({ clearExistingError = true } = {}) => {
     if (clearExistingError) setError('');
     try {
-      setSnapshot(await loadLottery());
+      setSnapshot(isArchive ? await loadLotteryArchive(archiveCampaignId) : await loadLottery());
     } catch (requestError) {
       setError(requestError.message);
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [archiveCampaignId, isArchive]);
 
   useEffect(() => {
     const root = document.documentElement;
@@ -433,6 +451,11 @@ export default function App() {
 
   useEffect(() => {
     const initialize = async () => {
+      if (isArchive) {
+        setActiveTab('results');
+        await refresh();
+        return;
+      }
       let preserveAuthError = false;
       const fragment = new URLSearchParams(window.location.hash.replace(/^#/u, ''));
       const ticket = fragment.get('sso_ticket');
@@ -459,7 +482,7 @@ export default function App() {
       await refresh({ clearExistingError: !((ticket || state) || preserveAuthError) });
     };
     void initialize();
-  }, [refresh]);
+  }, [isArchive, refresh]);
 
   const campaign = snapshot?.campaign;
   const phase = campaign?.phase || 'unavailable';
@@ -468,6 +491,7 @@ export default function App() {
   const participantLabel = useMemo(() => loading ? '读取中' : `${snapshot?.entryCount || 0} 人已参与`, [loading, snapshot?.entryCount]);
 
   useEffect(() => {
+    if (isArchive) return undefined;
     const refreshAtBoundary = () => void refresh();
     const next = [campaign?.closesAt, campaign?.drawsAt]
       .map((value) => new Date(value || 0).getTime())
@@ -476,7 +500,7 @@ export default function App() {
     const timer = next ? window.setTimeout(refreshAtBoundary, Math.min(next - Date.now() + 250, 2_147_000_000)) : null;
     window.addEventListener('focus', refreshAtBoundary);
     return () => { if (timer) window.clearTimeout(timer); window.removeEventListener('focus', refreshAtBoundary); };
-  }, [campaign?.closesAt, campaign?.drawsAt, refresh]);
+  }, [campaign?.closesAt, campaign?.drawsAt, isArchive, refresh]);
 
   const handleEnter = async (details) => {
     setBusy(true); setError('');
@@ -500,12 +524,22 @@ export default function App() {
     finally { setBusy(false); }
   };
 
+  const heroPrizeImages = (site.prizes.find((prize) => prize.tier === 'first')?.imageUrls || [])
+    .filter(Boolean)
+    .slice(0, 2);
+  const partnerTitleWords = String(site.hero.titleLineTwo || '').trim().split(/\s+/u);
+  const partnerTitleDisplay = partnerTitleWords.length >= 3
+    ? `${partnerTitleWords.slice(0, -1).join(' ')}\n${partnerTitleWords.at(-1)}`
+    : partnerTitleWords.join(' ');
+
   return (
-    <div className="site-shell">
+    <div className={`site-shell ${isArchive ? 'site-shell--archive' : ''}`}>
       <header className="topbar">
-        <a className="brand" href="#top" aria-label={`${site.brand.name}首页`}><span className="brand__mark">{site.brand.mark}</span><span><b>{site.brand.name}</b><small>{site.brand.tagline}</small></span></a>
+        <a className="brand" href={isArchive ? '/lottery/' : '#top'} aria-label={`${site.brand.name}${isArchive ? '当前活动' : '首页'}`}><span className="brand__mark">{site.brand.mark}</span><span><b>{site.brand.name}</b><small>{site.brand.tagline}</small></span></a>
         <div className="topbar__actions">
-          <span className={`phase-chip phase-chip--${phase}`}><i />{phaseCopy.title}</span>
+          <span className={`phase-chip phase-chip--${isArchive ? 'archive' : phase}`}><i />{isArchive ? '历史公示' : phaseCopy.title}</span>
+          {!isArchive && site.archive?.url && <a className="archive-link" href={site.archive.url}><History />{site.archive.label}</a>}
+          {isArchive && <a className="archive-link" href="/lottery/"><ArrowRight />返回当前活动</a>}
           {snapshot?.mainSiteUrl && <a className="icon-button" href={snapshot.mainSiteUrl} target="_blank" rel="noreferrer" title="返回主站"><ExternalLink /></a>}
           <div className="theme-selector" role="group" aria-label="页面主题">
             {THEME_OPTIONS.map(({ value, label, Icon }) => (
@@ -530,33 +564,53 @@ export default function App() {
         <section className="event-grid">
           <div className="hero-copy">
             <div className="event-kicker"><Waves /> {site.hero.kicker}</div>
-            <h1>
-              <span className="hero-title-word">{site.hero.titleLineOne}</span>
-              <span className="hero-title-line">
-                <span className="hero-title-word">{site.hero.titleLineTwo}</span>
-                <em className="hero-year-badge" aria-label={site.hero.yearBadge}><b aria-hidden="true">{site.hero.yearBadge}</b></em>
-              </span>
-            </h1>
-            <div className="hero-copy__cn"><i /> {site.hero.title} <i /></div>
+            <div className="hero-copy__partners" aria-label={`${site.hero.titleLineOne} 联动 ${site.hero.titleLineTwo}`}>
+              <span>{site.hero.titleLineOne}</span><b>×</b><span>{site.hero.titleLineTwo}</span>
+            </div>
+            <h1 className="hero-copy__cn">{site.hero.title}</h1>
             <p>{site.hero.description}</p>
+            {site.hero.sponsor && <div className="sponsor-credit"><Sparkles />{site.hero.sponsor}</div>}
             <div className="event-meta">
               <span><CalendarDays /> {formatEventTime(campaign?.startsAt, false, site.timeZone)} — {formatEventTime(campaign?.closesAt || DEFAULT_DRAW_AT, false, site.timeZone)}</span>
               <span><Users /> {participantLabel}</span>
             </div>
+            <div className="hero-copy__edition"><span>OPEN LOTTERY</span><b>{site.hero.yearBadge}</b></div>
           </div>
 
           <div className="hero-art" aria-hidden="true">
-            <div className="sun-orbit"><Sun /><i /><i /><i /></div>
-            <div className="ticket-poster"><span>{site.entryPrefix} / {site.hero.yearBadge}</span><strong>{site.hero.title}<br />好运募集计划</strong><small>LOGIN · ENTER · DRAW</small><div className="ticket-poster__waves"><i /><i /><i /></div></div>
-            <Sparkles className="hero-art__spark hero-art__spark--one" /><Sparkles className="hero-art__spark hero-art__spark--two" />
+            <div className="hero-art__sky" />
+            <div className="hero-art__horizon" />
+            <div className="hero-art__curve" />
+            <div className="hero-art__shards"><i /><i /><i /><i /><i /></div>
+            <div className="collab-lockup">
+              <span>{site.hero.titleLineOne}</span><b>×</b><span>{partnerTitleDisplay}</span>
+              <small>SPECIAL COLLABORATION // {site.hero.yearBadge}</small>
+            </div>
+            {heroPrizeImages.length > 0 && <div className="hero-prizes">
+              <small>PRIME ACCESS / CHOOSE ONE</small>
+              <div className="hero-prizes__showcase">
+                {heroPrizeImages.map((url, index) => (
+                  <div className={`hero-prizes__choice hero-prizes__choice--${index + 1}`} key={url}>
+                    <img src={url} alt="" />
+                    <span>OPTION {String(index + 1).padStart(2, '0')}</span>
+                  </div>
+                ))}
+              </div>
+            </div>}
+            <div className="hero-art__rail"><span>{site.entryPrefix}</span><b>06.93</b><i /></div>
+            <div className="hero-art__coordinate">AREA 06 // COMMUNITY EVENT</div>
           </div>
 
           <section className="status-card">
             <div className="status-card__copy"><small>{phaseCopy.eyebrow}</small><strong>{phaseCopy.title}</strong></div>
-            <Countdown targetAt={countdownTarget} />
+            {isArchive
+              ? <div className="archive-status"><History /><span><small>ARCHIVED RESULT</small><strong>{snapshot?.entryCount || 0} 个有效参与编号</strong></span></div>
+              : <Countdown targetAt={countdownTarget} />}
           </section>
 
-          <EntryPanel snapshot={snapshot} phase={phase} busy={busy} onEnter={() => setEntryDialogOpen(true)} onLogout={handleLogout} site={site} />
+          {isArchive
+            ? <section className="entry-panel archive-note"><ShieldCheck /><span><small>READ ONLY</small><strong>本页为不可修改的往期开奖公示，可继续核对候选清单与随机结果。</strong></span></section>
+            : <EntryPanel snapshot={snapshot} phase={phase} busy={busy} onEnter={() => setEntryDialogOpen(true)} onLogout={handleLogout} site={site} />}
         </section>
 
         <div className="toast-stack" aria-live="polite">
@@ -568,7 +622,7 @@ export default function App() {
       </main>
 
       <footer><span>{site.brand.name}</span><p>{site.brand.footer}</p></footer>
-      {entryDialogOpen && snapshot?.user && !snapshot?.entry && (
+      {!isArchive && entryDialogOpen && snapshot?.user && !snapshot?.entry && (
         <ParticipationDialog
           busy={busy}
           onClose={() => setEntryDialogOpen(false)}

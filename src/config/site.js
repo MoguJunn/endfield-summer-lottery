@@ -14,7 +14,9 @@ export const DEFAULT_SITE_CONFIG = Object.freeze({
     yearBadge: String(new Date().getFullYear()).slice(-2),
     title: '社区抽奖活动',
     description: '登录活动账号，领取一张属于你的活动票。',
+    sponsor: '',
   },
+  archive: { url: '', label: '往期结果公示' },
   contact: {
     format: 'text',
     label: '领奖联系方式',
@@ -27,7 +29,7 @@ export const DEFAULT_SITE_CONFIG = Object.freeze({
     confirmationLabel: '我已加入活动通知渠道',
   },
   prizes: [
-    { tier: 'first', rank: '01', title: '一等奖', description: '请配置一等奖内容。', icon: 'gift', imageUrl: '/prize-placeholder.svg' },
+    { tier: 'first', rank: '01', title: '一等奖', description: '请配置一等奖内容。', icon: 'gift', imageUrl: '/prize-placeholder.svg', imageUrls: ['/prize-placeholder.svg'] },
     { tier: 'second', rank: '02', title: '二等奖', description: '请配置二等奖内容。', icon: 'sparkles', imageUrl: '' },
     { tier: 'participation', rank: 'ALL', title: '参与纪念', description: '成功参与的用户可获得参与纪念。', icon: 'ticket', imageUrl: '' },
   ],

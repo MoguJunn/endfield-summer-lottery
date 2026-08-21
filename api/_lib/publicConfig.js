@@ -6,6 +6,7 @@ const DEFAULT_PRIZES = Object.freeze([
     description: '请在部署配置中填写一等奖内容与领取方式。',
     icon: 'gift',
     imageUrl: '/prize-placeholder.svg',
+    imageUrls: ['/prize-placeholder.svg'],
   },
   {
     tier: 'second',
@@ -58,6 +59,16 @@ function normalizeAssetUrl(value, fallback = '') {
   }
 }
 
+function normalizeAssetUrls(value, fallback = []) {
+  const values = Array.isArray(value) ? value : [];
+  const normalized = values
+    .slice(0, 4)
+    .map((item) => normalizeAssetUrl(item))
+    .filter(Boolean);
+  if (normalized.length) return [...new Set(normalized)];
+  return Array.isArray(fallback) ? fallback.filter(Boolean) : [];
+}
+
 function normalizeTimeZone(value) {
   const normalized = text(value, 'Asia/Shanghai', 80);
   try {
@@ -75,13 +86,21 @@ function parsePrizes(rawValue) {
     if (!Array.isArray(parsed) || !parsed.length) throw new Error('invalid_prizes');
     return parsed.slice(0, 8).map((prize, index) => {
       const fallback = DEFAULT_PRIZES[index] || DEFAULT_PRIZES.at(-1);
+      const hasImageUrl = Object.hasOwn(prize || {}, 'imageUrl');
+      const hasImageUrls = Array.isArray(prize?.imageUrls);
+      const imageUrl = normalizeAssetUrl(prize?.imageUrl, hasImageUrl ? '' : fallback.imageUrl);
+      const imageUrls = normalizeAssetUrls(
+        prize?.imageUrls,
+        hasImageUrls || hasImageUrl ? (imageUrl ? [imageUrl] : []) : fallback.imageUrls,
+      );
       return {
         tier: text(prize?.tier, fallback.tier, 40).toLowerCase(),
         rank: text(prize?.rank, fallback.rank, 12),
         title: text(prize?.title, fallback.title, 80),
         description: text(prize?.description, fallback.description, 240),
         icon: normalizeIcon(prize?.icon || fallback.icon),
-        imageUrl: normalizeAssetUrl(prize?.imageUrl, fallback.imageUrl),
+        imageUrl: imageUrls[0] || imageUrl,
+        imageUrls,
       };
     });
   } catch {
@@ -146,6 +165,11 @@ export function getPublicSiteConfig(env = process.env) {
       yearBadge: text(env.LOTTERY_HERO_YEAR_BADGE, String(new Date().getFullYear()).slice(-2), 4),
       title: text(env.LOTTERY_HERO_TITLE, '社区抽奖活动', 80),
       description: text(env.LOTTERY_HERO_DESCRIPTION, '登录活动账号，领取一张属于你的活动票。', 220),
+      sponsor: text(env.LOTTERY_SPONSOR_CREDIT, '', 160),
+    },
+    archive: {
+      url: normalizeAssetUrl(env.LOTTERY_ARCHIVE_URL),
+      label: text(env.LOTTERY_ARCHIVE_LABEL, '往期结果公示', 60),
     },
     contact: {
       format: contactFormat,

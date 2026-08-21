@@ -8,6 +8,8 @@ describe('public site configuration', () => {
     const site = getPublicSiteConfig({
       LOTTERY_BRAND_NAME: 'Community Draw',
       LOTTERY_BODY_FONT_STYLESHEET_URL: '/brand/fonts.css',
+      LOTTERY_SPONSOR_CREDIT: 'Thanks to the mirror maintainer',
+      LOTTERY_ARCHIVE_URL: '/lottery/archive/example-campaign',
       LOTTERY_CONTACT_FORMAT: 'email',
       LOTTERY_NOTIFICATION_REQUIRED: 'true',
       LOTTERY_NOTIFICATION_VALUE: 'announcements',
@@ -25,6 +27,8 @@ describe('public site configuration', () => {
 
     expect(site.brand.name).toBe('Community Draw');
     expect(site.fontStylesheetUrl).toBe('/brand/fonts.css');
+    expect(site.hero.sponsor).toBe('Thanks to the mirror maintainer');
+    expect(site.archive.url).toBe('/lottery/archive/example-campaign');
     expect(site.contact).toEqual(expect.objectContaining({
       format: 'email',
       notificationRequired: true,
@@ -33,11 +37,27 @@ describe('public site configuration', () => {
     expect(JSON.stringify(site)).not.toContain('must-not-be-public');
     expect(site.timeZone).toBe('UTC');
     expect(site.prizes[0].imageUrl).toBe('');
+    expect(site.prizes[0].imageUrls).toEqual([]);
     expect(site.rules).toEqual({
       version: '2026 rules',
       notice: 'Read before entering.',
       items: [{ title: 'Eligibility', description: 'One entry per account.' }],
     });
+  });
+
+  it('normalizes multiple prize images and keeps only safe unique urls', () => {
+    const site = getPublicSiteConfig({
+      LOTTERY_PRIZES_JSON: JSON.stringify([{
+        tier: 'first',
+        title: 'Choice prize',
+        imageUrls: ['/one.png', 'https://example.test/two.png', '/one.png', 'javascript:alert(1)'],
+      }]),
+    });
+
+    expect(site.prizes[0]).toEqual(expect.objectContaining({
+      imageUrl: '/one.png',
+      imageUrls: ['/one.png', 'https://example.test/two.png'],
+    }));
   });
 
   it('validates the supported contact formats', () => {

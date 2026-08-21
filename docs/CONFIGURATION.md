@@ -53,7 +53,7 @@
 
 `LOTTERY_BODY_FONT_STYLESHEET_URL` 可以指定 `public` 下的 CSS 路径或完整 HTTPS URL，用于加载部署方确认有权使用的品牌字体。样式表可覆盖 `--font-sans`；主视觉英文标题保留独立展示字体，不受该变量影响。公开模板不附带私有字体文件。
 
-`LOTTERY_BRAND_*`、`LOTTERY_HERO_*` 与 `LOTTERY_ENTRY_PREFIX` 控制页面文案。`LOTTERY_PRIZES_JSON` 是最多 8 项的 JSON 数组，每项支持：
+`LOTTERY_BRAND_*`、`LOTTERY_HERO_*` 与 `LOTTERY_ENTRY_PREFIX` 控制页面文案。`LOTTERY_SPONSOR_CREDIT` 可显示一行赞助者致谢；`LOTTERY_ARCHIVE_URL` 和 `LOTTERY_ARCHIVE_LABEL` 可指向部署方提供的往期只读公示。`LOTTERY_PRIZES_JSON` 是最多 8 项的 JSON 数组，每项支持：
 
 ```json
 {
@@ -62,11 +62,14 @@
   "title": "一等奖",
   "description": "奖品说明",
   "icon": "gift",
-  "imageUrl": "/prize-placeholder.svg"
+  "imageUrl": "/prize-placeholder.svg",
+  "imageUrls": ["/prize-one.png", "/prize-two.png"]
 }
 ```
 
-`icon` 只接受 `gift`、`sparkles`、`ticket`。`imageUrl` 可以是 `public` 下的路径或完整 HTTPS CDN URL。部署私有品牌素材时不要把它误提交到公共仓库。
+`icon` 只接受 `gift`、`sparkles`、`ticket`。`imageUrl` 用于单图奖品；`imageUrls` 最多接受 4 张图片，存在时优先使用第一张作为兼容主图。图片可以是 `public` 下的路径或完整 HTTPS CDN URL。部署私有品牌素材时不要把它误提交到公共仓库。
+
+历史公示路径可以使用 `/lottery/archive/<campaign-id>`，但归档 JSON 的生成、存放和完整性由部署方负责；模板不会从当前活动 API 动态推断历史页面配置。归档快照至少应保留活动、公开中奖者、候选 `public_id` 清单、种子披露、drand 随机值与签名、候选清单哈希和当期页面配置，且不得包含用户联系方式或内部身份字段。
 
 `LOTTERY_RULES_JSON` 用于配置规则页，包含规则版本 `version`、页面提示 `notice` 和最多 12 项 `items`。每项规则支持 `title` 与 `description`；活动方应在开放参与前明确公示参与资格、活动时间、奖品名额、开奖方式、领奖期限和异常处理办法。
 

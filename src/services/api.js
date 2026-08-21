@@ -36,6 +36,21 @@ export function loadLottery() {
   return request('/api/lottery');
 }
 
+export async function loadLotteryArchive(campaignId) {
+  const normalizedId = String(campaignId || '').trim();
+  if (!/^[a-z0-9][a-z0-9_-]{2,79}$/u.test(normalizedId)) {
+    throw new Error('无效的历史活动编号。');
+  }
+
+  const response = await fetch(`/lottery/local-activity/archives/${encodeURIComponent(normalizedId)}.json`, {
+    credentials: 'same-origin',
+    headers: { Accept: 'application/json' },
+  });
+  const payload = await response.json().catch(() => null);
+  if (!response.ok || !payload) throw new Error('历史活动公示暂时不可用。');
+  return payload?.data || payload;
+}
+
 export function enterLottery({ contactValue, notificationConfirmed, captcha } = {}) {
   return request('/api/lottery/enter', {
     method: 'POST',
