@@ -30,7 +30,7 @@
   "dependencies": {
     "@fontsource-variable/roboto-mono": "^5.3.0",
     "drand-client": "^1.4.2",
-    "lucide-react": "^1.26.0",
+    "lucide-react": "^1.39.0",
     "react": "^19.2.8",
     "react-dom": "^19.2.8"
   },
